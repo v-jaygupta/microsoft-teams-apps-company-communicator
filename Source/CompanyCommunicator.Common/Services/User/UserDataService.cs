@@ -89,6 +89,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.User
                 RowKey = activity?.From?.AadObjectId,
                 AadId = activity?.From?.AadObjectId,
                 UserId = activity?.From?.Id,
+                Name = activity?.From?.Name,
                 ConversationId = partitionKey.Equals(UserDataTableNames.UserDataPartition) ? activity?.Conversation?.Id : null,
                 ServiceUrl = activity?.ServiceUrl,
                 TenantId = activity?.Conversation?.TenantId,

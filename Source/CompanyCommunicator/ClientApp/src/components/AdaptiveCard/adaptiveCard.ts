@@ -104,3 +104,4 @@ export const setCardBtn = (card: any, buttonTitle?: string, buttonLink?: string)
         delete card.actions;
     }
 }
+

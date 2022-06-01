@@ -93,7 +93,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     SentBy = userName,
                     IsDraft = false,
                     Ack = draftNotificationEntity.Ack,
-                    InlineTranslation = draftNotificationEntity.InlineTranslation,
                     ScheduledDateTime = draftNotificationEntity.ScheduledDateTime,
                     Teams = draftNotificationEntity.Teams,
                     Rosters = draftNotificationEntity.Rosters,
@@ -106,6 +105,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     TotalMessageCount = draftNotificationEntity.TotalMessageCount,
                     SendingStartedDate = DateTime.UtcNow,
                     Status = NotificationStatus.Queued.ToString(),
+
+                    InlineTranslation = draftNotificationEntity.InlineTranslation,
+                    OnBehalfOf = draftNotificationEntity.OnBehalfOf,
+                    StageView = draftNotificationEntity.StageView,
+                    NotifyUser = draftNotificationEntity.NotifyUser,
+                    FullWidth = draftNotificationEntity.FullWidth,
 
                     PollOptions = draftNotificationEntity.PollOptions,
                     MessageType = draftNotificationEntity.MessageType,
@@ -158,9 +163,10 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     AllUsers = notificationEntity.AllUsers,
                     Ack = notificationEntity.Ack,
                     InlineTranslation = notificationEntity.InlineTranslation,
-                    // ScheduledDateTime = notificationEntity.ScheduledDateTime,
                     FullWidth = notificationEntity.FullWidth,
                     NotifyUser = notificationEntity.NotifyUser,
+                    OnBehalfOf = notificationEntity.OnBehalfOf,
+                    StageView = notificationEntity.StageView,
                     PollOptions = notificationEntity.PollOptions,
                     MessageType = notificationEntity.MessageType,
                     IsPollQuizMode = notificationEntity.IsPollQuizMode,
@@ -172,6 +178,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                 {
                     await this.storageProvider.CopyImageBlobAsync(notificationEntity.ImageBase64BlobName, newId);
                     newNotificationEntity.ImageBase64BlobName = newId;
+                }
+
+                if (notificationEntity.MessageType == "CustomAC")
+                {
+                    string acPayload = await this.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
+                    await this.SaveCustomAdaptiveCardAsync(newId, acPayload);
                 }
 
                 await this.CreateOrUpdateAsync(newNotificationEntity);
@@ -265,6 +277,18 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         {
             // TODO: validate prefix.
             return prefix + await this.storageProvider.DownloadBase64ImageAsync(blobName);
+        }
+
+        /// <inheritdoc/>
+        public async Task SaveCustomAdaptiveCardAsync(string blobName, string acPayload)
+        {
+            await this.storageProvider.UploadAdaptiveCardAsync(blobName, acPayload);
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> GetCustomAdaptiveCardAsync(string blobName)
+        {
+            return await this.storageProvider.DownloadAdaptiveCardAsync(blobName);
         }
 
         private string AppendNewLine(string originalString, string newString)

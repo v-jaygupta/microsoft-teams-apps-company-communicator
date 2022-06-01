@@ -21,6 +21,14 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MicrosoftGrap
         public Task InstallAppForUserAsync(string appId, string userId);
 
         /// <summary>
+        /// Uninstall an App for a user.
+        /// </summary>
+        /// <param name="appId">Teams App Id.</param>
+        /// <param name="userId">User's AAD Id.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public Task UninstallAppForUserAsync(string appId, string userId);
+
+        /// <summary>
         /// Installs App from App catalog for a team.
         /// </summary>
         /// <param name="appId">Teams App Id.</param>

@@ -251,5 +251,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
 
         public bool FullWidth { get; set; }
 
+        public bool OnBehalfOf { get; set; }
+
+        public bool StageView { get; set; }
     }
 }

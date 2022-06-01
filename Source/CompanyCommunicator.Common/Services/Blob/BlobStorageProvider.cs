@@ -200,6 +200,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob
         }
 
         /// <inheritdoc/>
+        public async Task DeleteAdaptiveCardBlobAsync(string blobName)
+        {
+            await this.DeleteBlobAsync(blobName, SentCardsBlobContainerName);
+        }
+
+        /// <inheritdoc/>
         public async Task CopyImageBlobAsync(string blobName, string newBlobName)
         {
             await this.CopyBlobAsync(blobName, newBlobName, ImagesBlobContainerName);

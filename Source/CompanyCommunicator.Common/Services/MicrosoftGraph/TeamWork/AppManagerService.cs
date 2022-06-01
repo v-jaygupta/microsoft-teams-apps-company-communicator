@@ -61,6 +61,29 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MicrosoftGrap
         }
 
         /// <inheritdoc/>
+        public async Task UninstallAppForUserAsync(string appId, string userId)
+        {
+            if (string.IsNullOrWhiteSpace(appId))
+            {
+                throw new ArgumentNullException(nameof(appId));
+            }
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+
+            var retryPolicy = PollyPolicy.GetGraphRetryPolicy(GraphConstants.MaxRetry);
+            await retryPolicy.ExecuteAsync(async () =>
+                await this.graphServiceClient.Users[userId]
+                    .Teamwork
+                    .InstalledApps[appId]
+                    .Request()
+                    .WithMaxRetry(GraphConstants.MaxRetry)
+                    .DeleteAsync());
+        }
+
+        /// <inheritdoc/>
         public async Task InstallAppForTeamAsync(string appId, string teamId)
         {
             if (string.IsNullOrWhiteSpace(appId))

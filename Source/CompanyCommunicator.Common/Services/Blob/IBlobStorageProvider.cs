@@ -50,6 +50,13 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob
         public Task DeleteImageBlobAsync(string blobName);
 
         /// <summary>
+        /// Delete a blob and all of its snapshots.
+        /// </summary>
+        /// <param name="blobName">Blob name.</param>
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        public Task DeleteAdaptiveCardBlobAsync(string blobName);
+
+        /// <summary>
         /// Copy a source blob to a destination blob with a different name.
         /// </summary>
         /// <param name="blobName">Source blob name.</param>

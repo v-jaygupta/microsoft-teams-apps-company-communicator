@@ -11,6 +11,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
     using Microsoft.Bot.Schema;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.NotificationData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Resources;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard.TaskModule;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -24,9 +25,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
         /// <param name="notificationDataEntity">Notification data entity.</param>
         /// <param name="translate">Translate equals true in case of the Translate Button is ready to translate message.</param>
         /// <returns>An adaptive card.</returns>
-        public virtual AdaptiveCard CreateAdaptiveCard(NotificationDataEntity notificationDataEntity, 
-            bool translate = false, bool acknowledged = false, 
-            bool voted = false, string selectedChoice = "")
+        public virtual AdaptiveCard CreateAdaptiveCard(NotificationDataEntity notificationDataEntity,
+            bool translate = false,
+            bool acknowledged = false,
+            bool voted = false,
+            string selectedChoice = "")
         {
             return this.CreateAdaptiveCard(
                 notificationDataEntity.Title,
@@ -43,7 +46,10 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                 acknowledged,
                 notificationDataEntity.IsPollMultipleChoice,
                 voted,
-                selectedChoice
+                selectedChoice,
+                notificationDataEntity.FullWidth,
+                notificationDataEntity.StageView,
+                notificationDataEntity.OnBehalfOf
                 );
         }
 
@@ -74,18 +80,76 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
             bool acknowledged = false,
             bool isMutipleChoice = false,
             bool voted = false,
-            string selectedChoice = "")
+            string selectedChoice = "",
+            bool fullWidth = false,
+            bool stageView = false,
+            bool onBehalfOf = false)
         {
             var version = new AdaptiveSchemaVersion(1, 3);
             AdaptiveCard card = new AdaptiveCard(version);
 
-            card.Body.Add(new AdaptiveTextBlock()
+            var container = new AdaptiveContainer
             {
-                Text = title,
-                Size = AdaptiveTextSize.ExtraLarge,
-                Weight = AdaptiveTextWeight.Bolder,
-                Wrap = true,
-            });
+                Items = new List<AdaptiveElement>()
+                {
+                    new AdaptiveColumnSet
+                    {
+                        Columns = new List<AdaptiveColumn>()
+                        {
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Stretch,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>()
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = title,
+                                        Size = AdaptiveTextSize.Large,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                        Wrap = true,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+
+                            // This column will be for the icon.
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Auto,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>()
+                                {
+                                    new AdaptiveImage
+                                    {
+                                        Url = new Uri("https://ogma.osi.office.net/outlooktranslatorapp/Images/TranslateIcon64x64.png"),
+                                        PixelWidth = 30,
+                                        PixelHeight = 30,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                        },
+                    },
+                },
+                SelectAction = new AdaptiveSubmitAction
+                {
+                    Title = !translate ? Strings.TranslateButton : Strings.ShowOriginalButton,
+                    Id = "translate",
+                    Data = "translate",
+                    DataJson = JsonConvert.SerializeObject(new { notificationId = notificationId, translation = !translate }),
+                },
+                Separator = true,
+            };
+            card.Body.Add(container);
+
+            //card.Body.Add(new AdaptiveTextBlock()
+            //{
+            //    Text = title,
+            //    Size = AdaptiveTextSize.ExtraLarge,
+            //    Weight = AdaptiveTextWeight.Bolder,
+            //    Wrap = true,
+            //});
 
             if (!string.IsNullOrWhiteSpace(imageUrl))
             {
@@ -227,11 +291,49 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
             if (!string.IsNullOrWhiteSpace(buttonTitle)
                 && !string.IsNullOrWhiteSpace(buttonUrl))
             {
-                card.Actions.Add(new AdaptiveOpenUrlAction()
+                //if (buttonUrl.Contains("youtube.com/embed/") && stageView)
+                //{
+                //    //var openStageViewAction = new AdaptiveSubmitAction
+                //    //{
+                //    //    Title = buttonTitle,
+                //    //    Data = new AdaptiveCardMSTeamsAction
+                //    //    {
+                //    //        MsteamsCardAction = new CardAction
+                //    //        {
+                //    //            Type = "invoke",
+                //    //            Value = new TabInfoAction
+                //    //            {
+                //    //                Type = "tab/tabInfoAction",
+                //    //                TabInfo = new TabInfo
+                //    //                {
+                //    //                    ContentUrl = buttonUrl,
+                //    //                    WebsiteUrl = buttonUrl,
+                //    //                    Name = buttonTitle,
+                //    //                    EntityId = "entityId",
+                //    //                },
+                //    //            },
+                //    //        },
+                //    //    },
+                //    //};
+                //    //card.Actions.Add(openStageViewAction);
+                //}
+                if ((buttonUrl.Contains("sharepoint.com") || buttonUrl.Contains("youtube.com/embed/")) && stageView)
                 {
-                    Title = buttonTitle,
-                    Url = new Uri(buttonUrl, UriKind.RelativeOrAbsolute),
-                });
+                    var openTaskModule = new AdaptiveSubmitAction
+                    {
+                        Title = buttonTitle,
+                        Data = new AdaptiveCardTaskFetchValue<string>() { Data = buttonUrl },
+                    };
+                    card.Actions.Add(openTaskModule);
+                }
+                else
+                {
+                    card.Actions.Add(new AdaptiveOpenUrlAction()
+                    {
+                        Title = buttonTitle,
+                        Url = new Uri(buttonUrl, UriKind.RelativeOrAbsolute),
+                    });
+                }
             }
 
             // if (!string.IsNullOrEmpty(notificationId))
@@ -269,9 +371,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                 });
             }
 
-            // Full width Adaptive card.
-            // card.AdditionalProperties.Add("msteams", new { width = "full" });
             
+
             return card;
         }
     }

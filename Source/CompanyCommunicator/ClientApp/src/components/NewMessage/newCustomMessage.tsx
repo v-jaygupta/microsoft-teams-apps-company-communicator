@@ -2,27 +2,22 @@
 // Licensed under the MIT License.
 
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
-import { withTranslation, WithTranslation } from "react-i18next";
+import { withTranslation } from "react-i18next";
 import * as AdaptiveCards from "adaptivecards";
-import { Button, Loader, Dropdown, Text, Flex, Input, TextArea, RadioGroup, Checkbox } from '@fluentui/react-northstar'
+import { Button, Loader, Dropdown, Text, Flex, TextArea, RadioGroup, Checkbox } from '@fluentui/react-northstar'
 import * as microsoftTeams from "@microsoft/teams-js";
-import { SimpleMarkdownEditor } from 'react-simple-markdown-editor';
 
-import './newPoll.scss';
-import './teamPoll.scss';
+import './newMessage.scss';
+import './teamTheme.scss';
 import { getDraftNotification, getTeams, createDraftNotification, updateDraftNotification, searchGroups, getGroups, verifyGroupAccess } from '../../apis/messageListApi';
 import {
-    getInitAdaptiveCard, setCardTitle, setCardImageLink, setCardSummary,
-    setCardAuthor, setCardBtn, setCardPollOptions, setCardPollQuizSelectedValue
-} from '../AdaptiveCard/adaptiveCardPoll';
-import { getBaseUrl } from '../../configVariables';
+    getInitAdaptiveCard, setCardTitle, 
+} from '../AdaptiveCard/adaptiveCard';
 import { ImageUtil } from '../../utility/imageutility';
 import { TFunction } from "i18next";
 import TimePicker, { LanguageDirection } from '../common/DateAndTimePicker/TimePicker';
 import LocalizedDatePicker from '../common/DateAndTimePicker/LocalizedDatePicker';
-import ChoiceContainer, { IChoiceContainerOption } from '../common/ChoiceContainer/ChoiceContainer';
-import { Utils } from '../common/Utils';
+import { formState, IDraftMessage, INewMessageProps } from './newMessage';
 
 type dropdownItem = {
     key: string,
@@ -34,90 +29,12 @@ type dropdownItem = {
     },
 }
 
-export interface IDraftMessage {
-    id?: string,
-    title: string,
-    imageLink?: string,
-    summary?: string,
-    author: string,
-    buttonTitle?: string,
-    buttonLink?: string,
-    teams: any[],
-    rosters: any[],
-    groups: any[],
-    allUsers: boolean,
 
-    ack?: boolean,
-    delayDelivery?: boolean,
-    inlineTranslation?: boolean,
-    scheduledDateTime?: Date,
-    fullWidth?: boolean,
-    notifyUser?: boolean,
-
-    pollOptions: string,
-    messageType: string,
-    isAnonymousVoting?: boolean,
-    isPollMultipleChoice: boolean;
-    isPollQuizMode: boolean;
-    pollQuizAnswers?: string;
-}
-
-export interface formState {
-    title: string,
-    summary?: string,
-    btnLink?: string,
-    imageLink?: string,
-    btnTitle?: string,
-    author: string,
-    card?: any,
-    page: string,
-    teamsOptionSelected: boolean,
-    rostersOptionSelected: boolean,
-    allUsersOptionSelected: boolean,
-    groupsOptionSelected: boolean,
-    teams?: any[],
-    groups?: any[],
-    exists?: boolean,
-    messageId: string,
-    loader: boolean,
-    groupAccess: boolean,
-    loading: boolean,
-    noResultMessage: string,
-    unstablePinned?: boolean,
-    selectedTeamsNum: number,
-    selectedRostersNum: number,
-    selectedGroupsNum: number,
-    selectedRadioBtn: string,
-    selectedTeams: dropdownItem[],
-    selectedRosters: dropdownItem[],
-    selectedGroups: dropdownItem[],
-    pollOptions: string[],
-    messageType: string,
-    errorImageUrlMessage: string,
-    errorButtonUrlMessage: string,
-    selectedRequestReadReceipt?: boolean,
-    selectedDelayDelivery?: boolean,
-    selectedInlineTranslation?: boolean,
-    selectedScheduledDateTime?: Date,
-    fullWidth?: boolean,
-    notifyUser?: boolean,
-
-    isPollMultipleChoice: boolean;
-    isPollQuizMode: boolean;
-    pollQuizAnswers?: number[];
-    choiceOptions: IChoiceContainerOption[];
-}
-
-export interface INewPollProps extends RouteComponentProps, WithTranslation {
-    getDraftMessagesList?: any;
-}
-
-class NewPoll extends React.Component<INewPollProps, formState> {
+class NewCustomMessage extends React.Component<INewMessageProps, formState> {
     readonly localize: TFunction;
     private card: any;
-    private fileInput: any;
 
-    constructor(props: INewPollProps) {
+    constructor(props: INewMessageProps) {
         super(props);
         this.localize = this.props.t;
         this.card = getInitAdaptiveCard(this.localize);
@@ -149,23 +66,19 @@ class NewPoll extends React.Component<INewPollProps, formState> {
             selectedTeams: [],
             selectedRosters: [],
             selectedGroups: [],
-            pollOptions: [],
             selectedRequestReadReceipt: false,
-            selectedInlineTranslation: false,
             selectedScheduledDateTime: new Date(),
-            selectedDelayDelivery: false, 
+
+            selectedFullWidth: false,
+            selectedNotifyUser: false,
+            selectedOnBehalfOf: false,
+            selectedStageView: false,
+
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
-
-            messageType: 'Poll',
-            isPollQuizMode: false,
-            isPollMultipleChoice: false,
-            pollQuizAnswers: [],
-            choiceOptions: [],
+            messageType: 'CustomAC',
+            templates: ['product announcement', 'conference', 'holidays'],
         }
-
-        this.fileInput = React.createRef();
-        this.handleImageSelection = this.handleImageSelection.bind(this);
     }
 
     public async componentDidMount() {
@@ -175,7 +88,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
         let params = this.props.match.params;
         this.setGroupAccess();
         this.getTeamList().then(() => {
-            if ('id' in params) { // existing message
+            if ('id' in params) {
                 let id = params['id'];
                 this.getItem(id).then(() => {
                     const selectedTeams = this.makeDropdownItemList(this.state.selectedTeams, this.state.teams);
@@ -185,10 +98,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
                         messageId: id,
                         selectedTeams: selectedTeams,
                         selectedRosters: selectedRosters,
-                    });
-
-                    setCardPollOptions(this.state.card, this.state.isPollMultipleChoice, this.state.pollOptions);
-                    this.updateCard();
+                    })
                 });
                 this.getGroupData(id).then(() => {
                     const selectedGroups = this.makeDropdownItems(this.state.groups);
@@ -197,90 +107,28 @@ class NewPoll extends React.Component<INewPollProps, formState> {
                     })
                 });
             } else {
-                // new message
-                //let options: string[] = [ this.localize("PollChoice", { "choiceNumber": 0 }) ];
-                
                 this.setState({
                     exists: false,
-                    loader: false,
-                    //pollOptions: options
+                    loader: false
                 }, () => {
-                    //setCardPollOptions(this.state.card, this.state.isPollMultipleChoice, this.state.pollOptions);
-                    //this.updateCard();
+
                     let adaptiveCard = new AdaptiveCards.AdaptiveCard();
-                    adaptiveCard.parse(this.state.card);
+                    if (this.state.summary) {
+                        adaptiveCard.parse(JSON.parse(this.state.summary));
+                    }
+                    else {
+                        adaptiveCard.parse(this.state.card);
+                    }
+                    
                     let renderedCard = adaptiveCard.render();
                     document.getElementsByClassName('adaptiveCardContainer')[0].appendChild(renderedCard);
-                    this.addChoice();
-                });
+                    if (this.state.btnLink) {
+                        let link = this.state.btnLink;
+                        adaptiveCard.onExecuteAction = function (action) { window.open(link, '_blank'); };
+                    }
+                })
             }
         });
-    }
-
-    private getItem = async (id: number) => {
-        try {
-            const response = await getDraftNotification(id);
-            const draftMessageDetail = response.data;
-            let selectedRadioButton = "teams";
-            if (draftMessageDetail.rosters.length > 0) {
-                selectedRadioButton = "rosters";
-            }
-            else if (draftMessageDetail.groups.length > 0) {
-                selectedRadioButton = "groups";
-            }
-            else if (draftMessageDetail.allUsers) {
-                selectedRadioButton = "allUsers";
-            }
-
-            this.setState({
-                teamsOptionSelected: draftMessageDetail.teams.length > 0,
-                selectedTeamsNum: draftMessageDetail.teams.length,
-                rostersOptionSelected: draftMessageDetail.rosters.length > 0,
-                selectedRostersNum: draftMessageDetail.rosters.length,
-                groupsOptionSelected: draftMessageDetail.groups.length > 0,
-                selectedGroupsNum: draftMessageDetail.groups.length,
-                selectedRadioBtn: selectedRadioButton,
-                selectedTeams: draftMessageDetail.teams,
-                selectedRosters: draftMessageDetail.rosters,
-                selectedGroups: draftMessageDetail.groups,
-
-                selectedRequestReadReceipt: draftMessageDetail.ack,
-                selectedInlineTranslation: draftMessageDetail.inlineTranslation,
-                selectedScheduledDateTime: draftMessageDetail.scheduledDateTime !== null ? new Date(draftMessageDetail.scheduledDateTime) : draftMessageDetail.scheduledDateTime,
-
-                selectedDelayDelivery: draftMessageDetail.scheduledDateTime !== null,
-
-                fullWidth: draftMessageDetail.fullWidth,
-                notifyUser: draftMessageDetail.notifyUser,
-
-                pollOptions: draftMessageDetail.pollOptions ? JSON.parse(draftMessageDetail.pollOptions) : [],
-                isPollMultipleChoice: draftMessageDetail.isPollMultipleChoice,
-                isPollQuizMode: draftMessageDetail.isPollQuizMode,
-                pollQuizAnswers: draftMessageDetail.pollQuizAnswers ? JSON.parse(draftMessageDetail.pollQuizAnswers) : [],
-            });
-
-            setCardTitle(this.card, draftMessageDetail.title);
-            setCardImageLink(this.card, draftMessageDetail.imageLink);
-            setCardSummary(this.card, draftMessageDetail.summary);
-            setCardAuthor(this.card, draftMessageDetail.author);
-            setCardPollOptions(this.card, this.state.isPollMultipleChoice, this.state.pollOptions);
-
-            this.setState({
-                title: draftMessageDetail.title,
-                summary: draftMessageDetail.summary,
-                btnLink: draftMessageDetail.buttonLink,
-                imageLink: draftMessageDetail.imageLink,
-                btnTitle: draftMessageDetail.buttonTitle,
-                author: draftMessageDetail.author,
-                allUsersOptionSelected: draftMessageDetail.allUsers,
-
-                loader: false
-            }, () => {
-                this.updateCard();
-            });
-        } catch (error) {
-            return error;
-        }
     }
 
     private makeDropdownItems = (items: any[] | undefined) => {
@@ -320,16 +168,8 @@ class NewPoll extends React.Component<INewPollProps, formState> {
 
     public setDefaultCard = (card: any) => {
         const titleAsString = this.localize("TitleText");
-        const summaryAsString = this.localize("Summary");
-        const authorAsString = this.localize("Author1");
-
-        setCardTitle(card, titleAsString);
-        let imgUrl = getBaseUrl() + "/image/imagePlaceholder.png";
-        setCardImageLink(card, imgUrl);
-        setCardSummary(card, summaryAsString);
-        setCardAuthor(card, authorAsString);
-        setCardBtn(card, this.localize("PollSubmitVote"), "https://adaptivecards.io");
         
+        setCardTitle(card, titleAsString);
     }
 
     private getTeamList = async () => {
@@ -381,238 +221,70 @@ class NewPoll extends React.Component<INewPollProps, formState> {
         }
     }
 
+    private getItem = async (id: number) => {
+        try {
+            const response = await getDraftNotification(id);
+            const draftMessageDetail = response.data;
+            let selectedRadioButton = "teams";
+            if (draftMessageDetail.rosters.length > 0) {
+                selectedRadioButton = "rosters";
+            }
+            else if (draftMessageDetail.groups.length > 0) {
+                selectedRadioButton = "groups";
+            }
+            else if (draftMessageDetail.allUsers) {
+                selectedRadioButton = "allUsers";
+            }
+
+            this.setState({
+                teamsOptionSelected: draftMessageDetail.teams.length > 0,
+                selectedTeamsNum: draftMessageDetail.teams.length,
+                rostersOptionSelected: draftMessageDetail.rosters.length > 0,
+                selectedRostersNum: draftMessageDetail.rosters.length,
+                groupsOptionSelected: draftMessageDetail.groups.length > 0,
+                selectedGroupsNum: draftMessageDetail.groups.length,
+                selectedRadioBtn: selectedRadioButton,
+                selectedTeams: draftMessageDetail.teams,
+                selectedRosters: draftMessageDetail.rosters,
+                selectedGroups: draftMessageDetail.groups,
+
+                selectedRequestReadReceipt: draftMessageDetail.ack,                
+                selectedScheduledDateTime: draftMessageDetail.scheduledDateTime !== null ? new Date(draftMessageDetail.scheduledDateTime) : draftMessageDetail.scheduledDateTime,
+                selectedDelayDelivery: draftMessageDetail.scheduledDateTime !== null,
+                
+                selectedFullWidth: draftMessageDetail.fullWidth,
+                selectedNotifyUser: draftMessageDetail.notifyUser,
+                selectedInlineTranslation: draftMessageDetail.inlineTranslation,
+                selectedOnBehalfOf: draftMessageDetail.onBehalfOf,
+                selectedStageView: draftMessageDetail.stageView,
+            });
+
+            
+            //setCardSummary(this.card, draftMessageDetail.summary);
+            
+            this.setState({
+                title: draftMessageDetail.title,
+                summary: draftMessageDetail.summary,
+
+                btnLink: draftMessageDetail.buttonLink,
+                imageLink: draftMessageDetail.imageLink,
+                btnTitle: draftMessageDetail.buttonTitle,
+                author: draftMessageDetail.author,
+                allUsersOptionSelected: draftMessageDetail.allUsers,
+                loader: false
+            }, () => {
+                this.updateCard();
+            });
+        } catch (error) {
+            return error;
+        }
+    }
+
     public componentWillUnmount() {
         document.removeEventListener("keydown", this.escFunction, false);
     }
 
-    _handleReaderLoaded = (readerEvt: any) => {
-        const binaryString = readerEvt.target.result;
-        console.log(binaryString);
-    }
-
-    handleImageSelection() {
-        const file = this.fileInput.current.files[0];
-        const { type: mimeType } = file;
-        console.log('file.size: ' + file.size); console.log('mimeType: ' + mimeType);
-
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        fileReader.onload = () => {
-            var image = new Image();
-            image.src = fileReader.result as string;
-            var resizedImageAsBase64 = fileReader.result as string;
-            console.log("resizedImageAsBase64: " + resizedImageAsBase64.length);
-            image.onload = function (e: any) {
-                const MAX_WIDTH = 1024;
-                // access image size here 
-                console.log('image.width: ' + image.width);
-                console.log('image.height: ' + image.height);
-                console.log('image.src.length: ' + image.src.length);
-
-                if (image.width > MAX_WIDTH) {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = ~~(image.height * (MAX_WIDTH / image.width));
-                    const context = canvas.getContext('2d', { alpha: false });
-                    if (!context) {
-                        return;
-                    }
-                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                    resizedImageAsBase64 = canvas.toDataURL(mimeType);
-                    console.log("resizedImageAsBase64: after resizing: " + resizedImageAsBase64.length);
-                }
-            }
-
-            setCardImageLink(this.card, resizedImageAsBase64);
-            this.updateCard();
-            //lets set the state with the image value
-            this.setState({
-                imageLink: resizedImageAsBase64
-            });
-        }
-
-        fileReader.onerror = (error) => {
-            //reject(error);
-        }
-    }
-
-    handleUploadClick = (event: any) => {
-        if (this.fileInput.current) {
-            this.fileInput.current.click();
-        }
-    }
-
     
-
-    private deleteChoice(i: any) {
-        let options = [...this.state.pollOptions];
-        options.splice(i, 1);        
-        setCardPollOptions(this.card, this.state.isPollMultipleChoice, options);
-
-        this.setState({
-            pollOptions: options,
-            pollQuizAnswers: [],
-            card: this.card
-        }, () => {
-            this.updateCard();
-        });
-    }
-
-    private onItemChecked(i: number, checked: boolean) {
-        console.log('onItemChecked');
-        console.log('i: ' + i + ' checked: ' + checked);
-
-        let answers = this.state.pollQuizAnswers;
-        if (!this.state.isPollMultipleChoice) {
-            answers = [];
-        }
-
-        
-        if (answers && checked) {
-            answers.push(i);
-            
-            
-            setCardTitle(this.card, this.state.title);
-            setCardImageLink(this.card, this.state.imageLink);
-            setCardSummary(this.card, this.state.summary);
-            setCardAuthor(this.card, this.state.author);
-            setCardPollOptions(this.card, this.state.isPollMultipleChoice, this.state.pollOptions);
-
-            let a: string = answers.join();
-            console.log('answers in string ');
-            console.log(a);
-            setCardPollQuizSelectedValue(this.card, a);            
-
-            this.setState({
-                pollQuizAnswers: answers,
-                card: this.card
-            }, () => {
-                this.updateCard();
-            });
-        }
-        if (answers && !checked) {
-            let newAnswers = answers.filter(a => a !== i);
-
-            let a: string = newAnswers.join();
-
-            setCardPollQuizSelectedValue(this.card, a);
-
-            this.setState({
-                pollQuizAnswers: newAnswers,
-                card: this.card
-            }, () => {
-                this.updateCard();
-            });
-        }
-        console.log('onItemChecked');
-        console.log(this.state.pollQuizAnswers);
-    }
-
-    private updateChoiceText(i, value) {
-        let options = [...this.state.pollOptions];
-        options[i] = value;
-        setCardPollOptions(this.card, this.state.isPollMultipleChoice, options);
-        this.updateCard();
-        this.setState({ pollOptions: options });
-    }
-
-    private addChoice() {
-        const newValue = this.localize("PollChoice", { "choiceNumber": this.state.pollOptions.length + 1 });
-        const newPollOptions = [...this.state.pollOptions, newValue];
-        
-        setCardTitle(this.card, this.state.title);
-        setCardImageLink(this.card, this.state.imageLink);
-        setCardSummary(this.card, this.state.summary);
-        setCardAuthor(this.card, this.state.author);
-        setCardPollOptions(this.card, this.state.isPollMultipleChoice, newPollOptions);
-
-        this.setState({
-            pollOptions: newPollOptions,
-            card: this.card
-        }, () => {
-            this.updateCard();
-        });
-    }
-
-    private onPollMultipleChoiceChanged = (event: any, data: any) => {
-        setCardTitle(this.card, this.state.title);
-        setCardImageLink(this.card, this.state.imageLink);
-        setCardSummary(this.card, this.state.summary);
-        setCardAuthor(this.card, this.state.author);
-        setCardPollOptions(this.card, data.checked, this.state.pollOptions);
-        
-        this.setState({
-            isPollMultipleChoice: data.checked,
-            pollQuizAnswers: [],
-            card: this.card
-        }, () => {
-            this.updateCard();
-        });
-    }
-
-    private onPollQuizModeChanged = (event: any, data: any) => {
-        this.setState({
-            isPollQuizMode: data.checked,
-            pollQuizAnswers: [],
-            card: this.card
-        }, () => {
-            this.updateCard();
-        });
-    }
-
-    renderChoicesSection = () => {
-        const options = this.state.pollOptions;
-
-        let choiceOptions: any[] = [];
-        let i = 0;
-        options.forEach((option) => {
-            const choiceOption: IChoiceContainerOption = {
-                value: option,
-                checked: false,
-                choicePlaceholder: this.localize("PollChoice", { "choiceNumber": i + 1 }),
-                deleteChoiceLabel: this.localize("PollDeleteChoiceX", { "choiceNumber": i + 1 })
-            };
-            choiceOptions.push(choiceOption);
-            i++;
-        });
-
-        // in case we have quize mode
-        const answers = this.state.pollQuizAnswers;
-        console.log('const answers = this.state.pollQuizAnswers;');
-        console.log(answers);
-        if (answers) {
-            for (let j = 0; j < answers.length; j++) {
-                let answerNumber: number = answers[j];
-                console.log('answerNumber: ' + answerNumber);
-                choiceOptions[answerNumber].checked = true;
-            }
-        }
-
-        return (
-            <Flex column>
-                <div className="indentation">
-                    <ChoiceContainer
-                        options={choiceOptions}
-                        multiselect={this.state.isPollMultipleChoice}
-                        quizMode={this.state.isPollQuizMode}
-                        onItemChecked={(i, checked: boolean) => {
-                            this.onItemChecked(i, checked);
-                        }}
-                        onDeleteChoice={(item) => {
-                            this.deleteChoice(item);
-                        }}
-                        onUpdateChoice={(item, value) => {
-                            this.updateChoiceText(item, value);
-                        }}
-                        onAddChoice={() => {
-                            this.addChoice();
-                        }} />
-                </div>
-
-            </Flex>
-
-        );
-    }
 
     public render(): JSX.Element {
         if (this.state.loader) {
@@ -624,74 +296,28 @@ class NewPoll extends React.Component<INewPollProps, formState> {
         } else {
             if (this.state.page === "CardCreation") {
                 return (
-                    <div className="taskModule">                        
+                    <div className="taskModule">
                         <Flex column className="formContainer" vAlign="stretch" gap="gap.small">
                             <Flex className="scrollableContent">
                                 <Flex.Item size="size.half">
                                     <Flex column className="formContentContainer">
-                                        <Input className="inputField"
-                                            autoFocus
-                                            value={this.state.title}
-                                            label={this.localize("TitleText")}
-                                            placeholder={this.localize("PlaceHolderTitle")}
-                                            onChange={this.onTitleChanged}
-                                            autoComplete="off"
-                                            fluid
-                                        />
 
-                                        <Flex gap="gap.small" vAlign="end">
-                                            <Input fluid className="inputField"
-                                                value={this.state.imageLink}
-                                                label={this.localize("ImageURL")}
-                                                placeholder={this.localize("ImageURL")}
-                                                onChange={this.onImageLinkChanged}
-                                                error={!(this.state.errorImageUrlMessage === "")}
-                                                autoComplete="off"
-                                            />
-                                            <Flex.Item push>
-                                                <Button onClick={this.handleUploadClick}
-                                                    size="medium" className="inputField"
-                                                    content={this.localize("UploadImage")} iconPosition="before" />
-                                            </Flex.Item>
-                                            <input type="file" accept=".jpg, .jpeg, .png, .gif"
-                                                style={{ display: 'none' }}
-                                                multiple={false}
-                                                onChange={this.handleImageSelection}
-                                                ref={this.fileInput} />
-                                            <Text className={(this.state.errorImageUrlMessage === "") ? "hide" : "show"} error size="small" content={this.state.errorImageUrlMessage} />
-                                        </Flex>
-                                        
-                                        <div className="textArea">
-                                            <Text content={this.localize("Summary")} />
-                                            <SimpleMarkdownEditor textAreaID={"summaryTextArea"}
-                                                enabledButtons={{
-                                                    strike: false,
-                                                    code: false,
-                                                    quote: false,
-                                                    h1: false,
-                                                    h2: false,
-                                                    h3: false,
-                                                    image: false
-                                                }} />
-                                            <TextArea                                                
+                                        <Dropdown
+                                            items={this.state.templates}
+                                            placeholder="Select your template"
+                                            checkable
+                                        />
+                                            <Text content={this.localize("AdaptiveCardJSONPayload")} />
+                                            <TextArea
+                                                autoFocus
                                                 placeholder={this.localize("Summary")}
                                                 value={this.state.summary}
                                                 onChange={this.onSummaryChanged}
                                                 id="summaryTextArea"
-                                                fluid
-                                                resize="vertical" />
-                                        </div>
+                                            fluid resize="both" variables={{ 'height': '400px' }} />
+                                        <Text content="Please use the designer https://dev.teams.microsoft.com/cards in order to create an Adaptive Card"/>
 
                                         
-                                        <Input className="inputField"
-                                            value={this.state.author}
-                                            label={this.localize("Author")}
-                                            placeholder={this.localize("Author")}
-                                            onChange={this.onAuthorChanged}
-                                            autoComplete="off"
-                                            fluid
-                                        />
-
                                         <Text className={(this.state.errorButtonUrlMessage === "") ? "hide" : "show"} error size="small" content={this.state.errorButtonUrlMessage} />
                                     </Flex>
                                 </Flex.Item>
@@ -707,42 +333,6 @@ class NewPoll extends React.Component<INewPollProps, formState> {
                                 </Flex>
                             </Flex>
 
-                        </Flex>
-                    </div>
-                );
-            }
-            else if (this.state.page === "PollCreation") {
-                return (
-                    <div className="taskModule">
-                        <Flex column className="formContainer" vAlign="stretch" gap="gap.small">
-                            <Flex className="scrollableContent">
-                                <Flex.Item size="size.half">
-                                    <Flex column className="formContentContainer">
-                                        
-                                        <h3>{this.localize("PollOptions")}</h3>
-                                        {this.renderChoicesSection()}
-                                        <br />
-                                        {/*<Checkbox label={this.localize("PollAnonymousVoting")} />*/}
-                                        <Checkbox label={this.localize("PollMultipleChoice")} checked={this.state.isPollMultipleChoice} onChange={this.onPollMultipleChoiceChanged} />
-                                        <Checkbox label={this.localize("PollQuizMode")} checked={this.state.isPollQuizMode} onChange={this.onPollQuizModeChanged} />
-
-                                        <Text className={(this.state.errorButtonUrlMessage === "") ? "hide" : "show"} error size="small" content={this.state.errorButtonUrlMessage} />
-                                    </Flex>
-                                </Flex.Item>
-                                <Flex.Item size="size.half">
-                                    <div className="adaptiveCardContainer">
-                                    </div>
-                                </Flex.Item>
-                            </Flex>
-
-                            <Flex className="footerContainer" vAlign="end" hAlign="end">
-                                <Flex className="buttonContainer">
-                                    <Flex.Item push>
-                                        <Button content={this.localize("Back")} disabled={this.isBackBtnDisabled()} onClick={this.onBack} secondary />
-                                    </Flex.Item>
-                                    <Button content={this.localize("Next")} disabled={this.isNextBtnDisabled()} id="saveBtn" onClick={this.onNext} primary />                                    
-                                </Flex>
-                            </Flex>
                         </Flex>
                     </div>
                 );
@@ -863,16 +453,71 @@ class NewPoll extends React.Component<INewPollProps, formState> {
                                                             </Flex>
                                                         )
                                                     },
-                                                }
+                                                },
+                                                {
+                                                    name: "csv",
+                                                    key: "csv",
+                                                    value: "csv",
+                                                    label: this.localize("SendToCSVUsers"),
+                                                    children: (Component, { name, ...props }) => {
+                                                        return (
+                                                            <Flex key={name} column>
+                                                                <Component {...props} />
+                                                                <TextArea
+                                                                    autoFocus
+                                                                    placeholder={this.localize("Summary")}
+                                                                    value={this.state.summary}
+                                                                    onChange={this.onSummaryChanged}
+                                                                    id="csvUsers"
+                                                                    fluid resize="both" variables={{ 'height': '400px' }} />
+                                                                <div className={this.state.selectedRadioBtn === "csv" ? "" : "hide"}>
+                                                                    <div className="noteText">
+                                                                        <Text error content={this.localize("SendToCSVUsersNote")} />
+                                                                    </div>
+                                                                </div>
+                                                            </Flex>
+                                                        )
+                                                    },
+                                                },
                                             ]}
                                         >
 
                                         </RadioGroup>
                                         
-                                        <h3>{this.localize("SendOptions")}</h3>                                        
-                                        
+                                    </Flex>
+                                </Flex.Item>
+                                <Flex.Item size="size.half">
+                                    <div className="adaptiveCardContainer">
+                                    </div>
+                                </Flex.Item>
+                            </Flex>
+                            <Flex className="footerContainer" vAlign="end" hAlign="end">
+                                <Flex className="buttonContainer">
+                                    <Flex.Item push>
+                                        <Button content={this.localize("Back")} disabled={this.isBackBtnDisabled()} onClick={this.onBack} secondary />
+                                    </Flex.Item>
+                                    <Button content={this.localize("Next")} disabled={this.isNextBtnDisabled()} id="saveBtn" onClick={this.onNext} primary />
+                                </Flex>
+                            </Flex>
+                        </Flex>
+                    </div>
+                );
+            }
+            else if (this.state.page === "AdditionalOptions") {                
+                return (
+                    <div className="taskModule">
+                        <Flex column className="formContainer" vAlign="stretch" gap="gap.small">
+                            <Flex className="scrollableContent">
+                                <Flex.Item size="size.half">
+                                    <Flex column className="formContentContainer">
+                                        <h3>{this.localize("SendOptions")}</h3>
+
+                                        <Checkbox label={this.localize("RequestReadReceipt")}
+                                            checked={this.state.teamsOptionSelected ? false : this.state.selectedRequestReadReceipt}
+                                            onChange={this.onRequestReadReceiptChanged} disabled={this.state.teamsOptionSelected} />
                                         <Checkbox label={this.localize("DelayDelivery")} checked={this.state.selectedDelayDelivery}
                                             onChange={this.onDelayDeliveryChanged} />
+
                                         <Flex gap="gap.smaller">
                                             <Flex.Item>
                                                 <LocalizedDatePicker
@@ -890,16 +535,22 @@ class NewPoll extends React.Component<INewPollProps, formState> {
                                                     isDisabled={!this.state.selectedDelayDelivery}
                                                     onPickerClose={this.onDeliveryTimeChange}
                                                     dir={LanguageDirection.Ltr} />
-                                            </Flex.Item>                                                                                      
+                                            </Flex.Item>
                                         </Flex>
+
+                                        <Checkbox label="Inline translation" checked={this.state.selectedInlineTranslation} onChange={this.onInlineTranslationChanged} />
+                                        <Checkbox label="Full Width" checked={this.state.selectedFullWidth} onChange={this.onFullWidthChanged} />
+                                        <Checkbox label="Notify User" checked={this.state.selectedNotifyUser} onChange={this.onNotifyUserChanged} />
+                                        <Checkbox label="On behalf Of" checked={this.state.selectedOnBehalfOf} onChange={this.onBehalfOfChanged} />
+                                        <Checkbox label="Stage view" checked={this.state.selectedStageView} onChange={this.onStageViewChanged} />
                                     </Flex>
                                 </Flex.Item>
                                 <Flex.Item size="size.half">
                                     <div className="adaptiveCardContainer">
                                     </div>
-                                    
-                                </Flex.Item> 
+                                </Flex.Item>
                             </Flex>
+
                             <Flex className="footerContainer" vAlign="end" hAlign="end">
                                 <Flex className="buttonContainer" gap="gap.small">
                                     <Flex.Item push>
@@ -930,6 +581,36 @@ class NewPoll extends React.Component<INewPollProps, formState> {
     private onDelayDeliveryChanged = (event: any, data: any) => {
         this.setState({
             selectedDelayDelivery: data.checked,
+        })
+    }
+
+    private onInlineTranslationChanged = (event: any, data: any) => {
+        this.setState({
+            selectedInlineTranslation: data.checked,
+        })
+    }
+
+    private onFullWidthChanged = (event: any, data: any) => {
+        this.setState({
+            selectedFullWidth: data.checked,
+        })
+    }
+
+    private onNotifyUserChanged = (event: any, data: any) => {
+        this.setState({
+            selectedNotifyUser: data.checked,
+        })
+    }
+
+    private onBehalfOfChanged = (event: any, data: any) => {
+        this.setState({
+            selectedOnBehalfOf: data.checked,
+        })
+    }
+
+    private onStageViewChanged = (event: any, data: any) => {
+        this.setState({
+            selectedStageView: data.checked,
         })
     }
 
@@ -970,18 +651,12 @@ class NewPoll extends React.Component<INewPollProps, formState> {
     }
 
     private isNextBtnDisabled = () => {
-        const noSelectedChoices =  this.state.pollQuizAnswers ? this.state.pollQuizAnswers.length === 0 : true;
-
         const title = this.state.title;
-        if (Utils.isEmpty(title)) return true;
-        
-        return (this.state.isPollQuizMode && noSelectedChoices);
+        return !(title);
     }
 
     private isBackBtnDisabled = () => {
-        const noSelectedChoices = this.state.pollQuizAnswers ? this.state.pollQuizAnswers.length === 0 : true;
-
-        return this.state.isPollQuizMode && noSelectedChoices;
+        return false;
     }
 
     private getItems = () => {
@@ -1014,7 +689,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
     private static MAX_SELECTED_TEAMS_NUM: number = 20;
 
     private onTeamsChange = (event: any, itemsData: any) => {
-        if (itemsData.value.length > NewPoll.MAX_SELECTED_TEAMS_NUM) return;
+        if (itemsData.value.length > NewCustomMessage.MAX_SELECTED_TEAMS_NUM) return;
         this.setState({
             selectedTeams: itemsData.value,
             selectedTeamsNum: itemsData.value.length,
@@ -1026,7 +701,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
     }
 
     private onRostersChange = (event: any, itemsData: any) => {
-        if (itemsData.value.length > NewPoll.MAX_SELECTED_TEAMS_NUM) return;
+        if (itemsData.value.length > NewCustomMessage.MAX_SELECTED_TEAMS_NUM) return;
         this.setState({
             selectedRosters: itemsData.value,
             selectedRostersNum: itemsData.value.length,
@@ -1119,22 +794,21 @@ class NewPoll extends React.Component<INewPollProps, formState> {
             author: this.state.author,
             buttonTitle: this.state.btnTitle,
             buttonLink: this.state.btnLink,
+
             teams: selectedTeams,
             rosters: selctedRosters,
             groups: selectedGroups,
             allUsers: this.state.allUsersOptionSelected,
-
             ack: this.state.selectedRequestReadReceipt,
-            inlineTranslation: this.state.selectedInlineTranslation,
             scheduledDateTime: this.state.selectedDelayDelivery ? this.state.selectedScheduledDateTime : undefined,
-            fullWidth: this.state.fullWidth,
-            notifyUser: this.state.notifyUser,
+
+            fullWidth: this.state.selectedFullWidth,
+            notifyUser: this.state.selectedNotifyUser,
+            inlineTranslation: this.state.selectedInlineTranslation,
+            onBehalfOf: this.state.selectedOnBehalfOf,
+            stageView: this.state.selectedStageView,
 
             messageType: this.state.messageType,
-            pollOptions: JSON.stringify(this.state.pollOptions),
-            isPollQuizMode: this.state.isPollQuizMode,
-            pollQuizAnswers: this.state.isPollQuizMode ? JSON.stringify(this.state.pollQuizAnswers) : "[]",
-            isPollMultipleChoice: this.state.isPollMultipleChoice,
         };
 
         if (this.state.exists) {
@@ -1172,7 +846,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
 
     private onNext = (event: any) => {
         const current = this.state.page;
-        let next: string = (current === "CardCreation") ? "PollCreation" : "AudienceSelection";
+        let next: string = (current === "CardCreation") ? "AudienceSelection" : "AdditionalOptions";
 
         this.setState({
             page: next
@@ -1183,7 +857,7 @@ class NewPoll extends React.Component<INewPollProps, formState> {
 
     private onBack = (event: any) => {
         const current = this.state.page;
-        let back: string = (current === "PollCreation") ? "CardCreation" : "PollCreation";
+        let back: string = (current === "AudienceSelection") ? "CardCreation" : "AdditionalOptions";
 
         this.setState({
             page: back
@@ -1192,108 +866,47 @@ class NewPoll extends React.Component<INewPollProps, formState> {
         });
     }
 
-    private onTitleChanged = (event: any) => {
-        let showDefaultCard = (!event.target.value && !this.state.imageLink && !this.state.summary && !this.state.author && !this.state.btnTitle && !this.state.btnLink);
-        setCardTitle(this.card, event.target.value);
-        setCardImageLink(this.card, this.state.imageLink);
-        setCardSummary(this.card, this.state.summary);
-        setCardAuthor(this.card, this.state.author);
-        this.setState({
-            title: event.target.value,
-            card: this.card
-        }, () => {
-            if (showDefaultCard) {
-                this.setDefaultCard(this.card);
-            }
-            this.updateCard();
-        });
-    }
+    
 
-    private onImageLinkChanged = (event: any) => {
-        let url = event.target.value.toLowerCase();
-        if (!((url === "") || (url.startsWith("https://") || (url.startsWith("data:image/png;base64,")) || (url.startsWith("data:image/jpeg;base64,")) || (url.startsWith("data:image/gif;base64,"))))) {
-            this.setState({
-                errorImageUrlMessage: this.localize("ErrorURLMessage")
-            });
-        } else {
-            this.setState({
-                errorImageUrlMessage: ""
-            });
-        }
-
-        let showDefaultCard = (!this.state.title && !event.target.value && !this.state.summary && !this.state.author && !this.state.btnTitle && !this.state.btnLink);
-        setCardTitle(this.card, this.state.title);
-        setCardImageLink(this.card, event.target.value);
-        setCardSummary(this.card, this.state.summary);
-        setCardAuthor(this.card, this.state.author);
-        this.setState({
-            imageLink: event.target.value,
-            card: this.card
-        }, () => {
-            if (showDefaultCard) {
-                this.setDefaultCard(this.card);
-            }
-            this.updateCard();
-        });
-    }
+    
 
     private onSummaryChanged = (event: any) => {
-        let showDefaultCard = (!this.state.title && !this.state.imageLink && !event.target.value && !this.state.author && !this.state.btnTitle && !this.state.btnLink);
-        setCardTitle(this.card, this.state.title);
-        setCardImageLink(this.card, this.state.imageLink);
-        setCardSummary(this.card, event.target.value);
-        setCardAuthor(this.card, this.state.author);
+        /*let showDefaultCard = (!this.state.title && !this.state.imageLink && !event.target.value && !this.state.author && !this.state.btnTitle && !this.state.btnLink);*/
+        
+        //setFullCardContent(this.card, event.target.value);
+        
         this.setState({
             summary: event.target.value,
-            card: this.card
+            title: this.localize("CustomAdaptiveCard")
         }, () => {
-            if (showDefaultCard) {
-                this.setDefaultCard(this.card);
-            }
-            this.updateCard();
-        });
-    }
-
-    private onAuthorChanged = (event: any) => {
-        let showDefaultCard = (!this.state.title && !this.state.imageLink && !this.state.summary && !event.target.value && !this.state.btnTitle && !this.state.btnLink);
-        setCardTitle(this.card, this.state.title);
-        setCardImageLink(this.card, this.state.imageLink);
-        setCardSummary(this.card, this.state.summary);
-        setCardAuthor(this.card, event.target.value);
-
-        this.setState({
-            author: event.target.value,
-            card: this.card
-        }, () => {
-            if (showDefaultCard) {
-                this.setDefaultCard(this.card);
-            }
+            console.log(this.state);
             this.updateCard();
         });
     }
 
     
 
+    
+
     private updateCard = () => {
         const adaptiveCard = new AdaptiveCards.AdaptiveCard();
-        adaptiveCard.parse(this.state.card);
-        const renderedCard = adaptiveCard.render();
-
-        if (renderedCard) {
-            const inputs = renderedCard.getElementsByTagName('input');
-            Array.from(inputs).forEach((inputElement: Element): void => {
-                (inputElement as HTMLInputElement).disabled = true;
-            });
-
-            const container = document.getElementsByClassName('adaptiveCardContainer')[0].firstChild;
-            if (container != null) {
-                container.replaceWith(renderedCard);
-            } else {
-                document.getElementsByClassName('adaptiveCardContainer')[0].appendChild(renderedCard);
-            }
+        if (this.state.summary) {
+            adaptiveCard.parse(JSON.parse(this.state.summary));
         }
+        else {
+            adaptiveCard.parse(this.state.card);
+        }
+        const renderedCard = adaptiveCard.render();
+        const container = document.getElementsByClassName('adaptiveCardContainer')[0].firstChild;
+        if (container != null) {
+            container.replaceWith(renderedCard);
+        } else {
+            document.getElementsByClassName('adaptiveCardContainer')[0].appendChild(renderedCard);
+        }
+        const link = this.state.btnLink;
+        adaptiveCard.onExecuteAction = function (action) { window.open(link, '_blank'); }
     }
 }
 
-const newPollWithTranslation = withTranslation()(NewPoll);
-export default newPollWithTranslation;
+const newCustomMessageWithTranslation = withTranslation()(NewCustomMessage);
+export default newCustomMessageWithTranslation;

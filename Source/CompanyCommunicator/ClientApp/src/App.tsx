@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import Configuration from './components/config';
 import TabContainer from './components/TabContainer/tabContainer';
 import NewMessage from './components/NewMessage/newMessage';
+import NewCustomMessage from './components/NewMessage/newCustomMessage';
 import NewPoll from './components/NewPoll/newPoll';
 import StatusTaskModule from './components/StatusTaskModule/statusTaskModule';
 import './App.scss';
@@ -120,6 +121,8 @@ class App extends React.Component<{}, IAppState> {
                                 <Route exact path="/messages" component={TabContainer} />
                                 <Route exact path="/newmessage" component={NewMessage} />                                
                                 <Route exact path="/newmessage/:id" component={NewMessage} />
+                                <Route exact path="/newcustommessage" component={NewCustomMessage} />
+                                <Route exact path="/newcustommessage/:id" component={NewCustomMessage} />
                                 <Route exact path="/newpoll" component={NewPoll} />
                                 <Route exact path="/newpoll/:id" component={NewPoll} />
                                 <Route exact path="/viewstatus/:id" component={StatusTaskModule} />

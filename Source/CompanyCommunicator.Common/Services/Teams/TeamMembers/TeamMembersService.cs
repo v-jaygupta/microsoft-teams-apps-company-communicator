@@ -80,6 +80,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Teams
                         var userDataEntity = new UserDataEntity
                         {
                             UserId = member.Id,
+                            Name = member.Name,
 
                             // Set the conversation ID to null because it is not known at this time and
                             // may not have been created yet.

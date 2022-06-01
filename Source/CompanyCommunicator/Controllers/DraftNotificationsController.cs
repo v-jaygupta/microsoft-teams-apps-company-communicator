@@ -172,6 +172,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
                 InlineTranslation = notification.InlineTranslation,
                 NotifyUser = notification.NotifyUser,
                 FullWidth = notification.FullWidth,
+                OnBehalfOf = notification.OnBehalfOf,
+                StageView = notification.StageView,
                 PollOptions = notification.PollOptions,
                 MessageType = notification.MessageType,
                 IsPollQuizMode = notification.IsPollQuizMode,
@@ -183,6 +185,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             {
                 notificationEntity.ImageLink = await this.notificationDataRepository.SaveImageAsync(notification.Id, notificationEntity.ImageLink);
                 notificationEntity.ImageBase64BlobName = notification.Id;
+            }
+
+            if (notificationEntity.MessageType == "CustomAC")
+            {
+                await this.notificationDataRepository.SaveCustomAdaptiveCardAsync(notification.Id, notification.Summary);
+                notificationEntity.Summary = notification.Id;
             }
 
             await this.notificationDataRepository.CreateOrUpdateAsync(notificationEntity);
@@ -213,6 +221,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             if (!string.IsNullOrWhiteSpace(notificationEntity.ImageBase64BlobName))
             {
                 await this.blobStorageProvider.DeleteImageBlobAsync(notificationEntity.ImageBase64BlobName);
+            }
+
+            if (notificationEntity.MessageType == "CustomAC")
+            {
+                await this.blobStorageProvider.DeleteAdaptiveCardBlobAsync(notificationEntity.Summary);
             }
 
             await this.notificationDataRepository.DeleteAsync(notificationEntity);
@@ -289,6 +302,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
                 ScheduledDateTime = notificationEntity.ScheduledDateTime,
                 NotifyUser = notificationEntity.NotifyUser,
                 FullWidth = notificationEntity.FullWidth,
+                OnBehalfOf = notificationEntity.OnBehalfOf,
+                StageView = notificationEntity.StageView,
                 PollOptions = notificationEntity.PollOptions,
                 MessageType = notificationEntity.MessageType,
                 IsPollQuizMode = notificationEntity.IsPollQuizMode,
@@ -300,6 +315,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             if (!string.IsNullOrEmpty(notificationEntity.ImageBase64BlobName))
             {
                 result.ImageLink = await this.notificationDataRepository.GetImageAsync(notificationEntity.ImageLink, notificationEntity.ImageBase64BlobName);
+            }
+
+            if (notificationEntity.MessageType == "CustomAC")
+            {
+                result.Summary = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
             }
 
             return this.Ok(result);

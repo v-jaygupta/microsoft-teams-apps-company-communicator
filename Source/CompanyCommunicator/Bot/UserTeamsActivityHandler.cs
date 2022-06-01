@@ -21,6 +21,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotificationData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Resources;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard.TaskModule;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Translator;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
@@ -39,7 +40,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
         private readonly ISentNotificationDataRepository sentNotificationDataRepository;
         private readonly INotificationDataRepository notificationDataRepository;
         private readonly AdaptiveCardCreator adaptiveCardCreator;
-        //private readonly ITranslator translator;
+        private readonly ITranslator translator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserTeamsActivityHandler"/> class.
@@ -47,7 +48,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
         /// <param name="teamsDataCapture">Teams data capture service.</param>
         public UserTeamsActivityHandler(TeamsDataCapture teamsDataCapture,
             IBotTelemetryClient botTelemetryClient,
-            //ITranslator translator,
+            ITranslator translator,
             ISentNotificationDataRepository sentNotificationDataRepository,
             INotificationDataRepository notificationDataRepository,
             AdaptiveCardCreator adaptiveCardCreator)
@@ -56,7 +57,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
             this.sentNotificationDataRepository = sentNotificationDataRepository ?? throw new ArgumentNullException(nameof(sentNotificationDataRepository));
             this.notificationDataRepository = notificationDataRepository ?? throw new ArgumentException(nameof(notificationDataRepository));
             this.teamsDataCapture = teamsDataCapture ?? throw new ArgumentNullException(nameof(teamsDataCapture));
-            //this.translator = translator ?? throw new ArgumentException(nameof(translator));
+            this.translator = translator ?? throw new ArgumentException(nameof(translator));
             this.adaptiveCardCreator = adaptiveCardCreator ?? throw new ArgumentException(nameof(adaptiveCardCreator));
         }
 
@@ -115,6 +116,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                     string notificationId = jValue.ContainsKey("notificationId") ? jValue.Value<string>("notificationId") : string.Empty;
 
                     string selectedChoice = jValue.ContainsKey("PollChoices") ? jValue.Value<string>("PollChoices") : string.Empty;
+                    bool? translation = null;
+                    if (jValue.ContainsKey("translation"))
+                    {
+                        translation = jValue.Value<bool>("translation");
+                    }
+
                     if (!string.IsNullOrEmpty(selectedChoice))
                     {
                         var notificationEntity2 = await this.notificationDataRepository.GetAsync(NotificationDataTableNames.SentNotificationsPartition, notificationId);
@@ -167,9 +174,30 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                     else
                     {
                         var notificationEntity = await this.notificationDataRepository.GetAsync(NotificationDataTableNames.SentNotificationsPartition, notificationId);
-                        if (!string.IsNullOrWhiteSpace(notificationEntity.ButtonLink))
+                        //if (!string.IsNullOrWhiteSpace(notificationEntity.ButtonLink))
+                        //{
+                        //    notificationEntity.ButtonLink = jValue.ContainsKey("trackClickUrl") ? jValue.Value<string>("trackClickUrl") : string.Empty;
+                        //}
+
+                        if (translation != null && translation.Value)
                         {
-                            notificationEntity.ButtonLink = jValue.ContainsKey("trackClickUrl") ? jValue.Value<string>("trackClickUrl") : string.Empty;
+                            var detectedUserLocale = turnContext.Activity.Locale;
+                            string userLanguage = string.Empty;
+                            if (detectedUserLocale.Contains('-'))
+                            {
+                                userLanguage = detectedUserLocale.Split('-')[0];
+                            }
+
+                            notificationEntity.Title = await this.translator.TranslateAsync(notificationEntity.Title, userLanguage);
+                            if (!string.IsNullOrWhiteSpace(notificationEntity.Summary))
+                            {
+                                notificationEntity.Summary = await this.translator.TranslateAsync(notificationEntity.Summary, userLanguage);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(notificationEntity.ButtonTitle))
+                            {
+                                notificationEntity.ButtonTitle = await this.translator.TranslateAsync(notificationEntity.ButtonTitle, userLanguage);
+                            }
                         }
 
                         // Download base64 data from blob convert to base64 string.
@@ -178,7 +206,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                             notificationEntity.ImageLink = await this.notificationDataRepository.GetImageAsync(notificationEntity.ImageLink, notificationEntity.ImageBase64BlobName);
                         }
 
-                        var card = this.adaptiveCardCreator.CreateAdaptiveCard(notificationEntity, translate: false, acknowledged: true);
+                        var card = this.adaptiveCardCreator.CreateAdaptiveCard(notificationEntity, translate: translation != null && translation.Value, acknowledged: translation == null);
 
                         var adaptiveCardAttachment = new Attachment()
                         {
@@ -197,7 +225,14 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                             { "notificationSendCompletedDate", notificationEntity.SentDate?.ToString() },
                             { "userId", activity.From?.AadObjectId },
                         };
-                        this.LogActivityTelemetry(activity, "TrackAck", properties);
+                        if (translation != null)
+                        {
+                            this.LogActivityTelemetry(activity, "TrackTranslation", properties);
+                        }
+                        else
+                        {
+                            this.LogActivityTelemetry(activity, "TrackAck", properties);
+                        }
 
                         var newActivity = MessageFactory.Attachment(adaptiveCardAttachment);
                         newActivity.Id = turnContext.Activity.ReplyToId;
@@ -206,6 +241,61 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                     }
                 }
             }
+        }
+
+        protected override async Task<TaskModuleResponse> OnTeamsTaskModuleFetchAsync(ITurnContext<IInvokeActivity> turnContext, TaskModuleRequest taskModuleRequest, CancellationToken cancellationToken)
+        {
+            var asJobject = JObject.FromObject(taskModuleRequest.Data);
+            var url = asJobject.ToObject<CardTaskFetchValue<string>>()?.Data;
+
+            if (url.Contains(".sharepoint.com"))
+            {
+                var uri = new Uri(url);
+                string host = uri.Host;
+                string path = uri.PathAndQuery;
+                url = "https://" + host + "/_layouts/15/teamslogon.aspx?spfx=true&dest=" + path;
+            }
+
+            var properties = new Dictionary<string, string>
+            {
+                { "taskModuleRequest", JsonConvert.SerializeObject(taskModuleRequest) },
+                { "url", url },
+            };
+            this.LogActivityTelemetry(turnContext.Activity, "OnTeamsTaskModuleFetchAsync", properties);
+
+            return new TaskModuleResponse
+            {
+                Task = new TaskModuleContinueResponse()
+                {
+                    Type = "continue",
+                    Value = new TaskModuleTaskInfo()
+                    {
+                        Height = 530,
+                        Width = 1000,
+                        Url = url,
+                        //CompletionBotId = "be9fe432-ebe6-4da9-a657-2a6ab261768e",
+                    },
+                },
+            };
+        }
+
+        protected override async Task<TaskModuleResponse> OnTeamsTaskModuleSubmitAsync(ITurnContext<IInvokeActivity> turnContext,
+            TaskModuleRequest taskModuleRequest, CancellationToken cancellationToken)
+        {
+            var activity = turnContext.Activity;
+            var properties = new Dictionary<string, string>
+                {
+                    { "taskModuleRequest", JsonConvert.SerializeObject(taskModuleRequest) },
+                };
+            this.LogActivityTelemetry(activity, "OnTeamsTaskModuleSubmitAsync", properties);
+
+            return new TaskModuleResponse
+            {
+                Task = new TaskModuleMessageResponse()
+                {
+                    Value = "Thanks!",
+                },
+            };
         }
 
         protected override async Task OnReactionsAddedAsync(IList<MessageReaction> messageReactions, ITurnContext<IMessageReactionActivity> turnContext, CancellationToken cancellationToken)

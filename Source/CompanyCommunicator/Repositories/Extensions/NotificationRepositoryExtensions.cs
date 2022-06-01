@@ -48,10 +48,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Repositories.Extensions
                 Groups = notification.Groups,
                 AllUsers = notification.AllUsers,
                 Ack = notification.Ack,
-                InlineTranslation = notification.InlineTranslation,
                 ScheduledDateTime = notification.ScheduledDateTime,
+                InlineTranslation = notification.InlineTranslation,
                 NotifyUser = notification.NotifyUser,
                 FullWidth = notification.FullWidth,
+                OnBehalfOf = notification.OnBehalfOf,
+                StageView = notification.StageView,
                 PollOptions = notification.PollOptions,
                 MessageType = notification.MessageType,
                 IsPollQuizMode = notification.IsPollQuizMode,
@@ -67,6 +69,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Repositories.Extensions
             else
             {
                 notificationEntity.ImageLink = notification.ImageLink;
+            }
+
+            if (notification.MessageType == "CustomAC")
+            {
+                await notificationRepository.SaveCustomAdaptiveCardAsync(newId, notification.Summary);
+                notificationEntity.Summary = newId;
             }
 
             await notificationRepository.CreateOrUpdateAsync(notificationEntity);

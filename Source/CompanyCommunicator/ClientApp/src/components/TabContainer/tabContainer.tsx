@@ -30,6 +30,7 @@ export interface ITaskInfoProps extends WithTranslation {
 export interface ITabContainerState {
     url: string;
     urlPoll: string;
+    urlCustomMessage: string;
 }
 
 class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
@@ -39,7 +40,8 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
         this.localize = this.props.t;
         this.state = {
             url: getBaseUrl() + "/newmessage?locale={locale}",
-            urlPoll: getBaseUrl() + "/newpoll?locale={locale}"
+            urlPoll: getBaseUrl() + "/newpoll?locale={locale}",
+            urlCustomMessage: getBaseUrl() + "/newcustommessage?locale={locale}",
         }
         this.escFunction = this.escFunction.bind(this);
     }
@@ -83,8 +85,7 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
         ]
         return (
             <Flex className="tabContainer" column fill gap="gap.small">
-                <Flex className="newPostBtn" hAlign="end" vAlign="end">
-                   {/* <Button content={this.localize("NewMessage")} onClick={this.onNewMessage} primary />*/}
+                <Flex className="newPostBtn" hAlign="end" vAlign="end">                   
                     <SplitButton
                         menu={[
                             {
@@ -97,7 +98,12 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                                 content: this.localize("NewPoll"),
                                 icon: <PollIcon />,
                                 onClick: () => { this.onNewPoll(); },
-                            }
+                            },
+                            //{
+                            //    key: 'newCustomMessage',
+                            //    content: this.localize("NewCustomAdaptiveCardMessage"),
+                            //    onClick: () => { this.onNewCustomMessage(); },
+                            //},
                         ]}
                         button={{
                             content: this.localize("NewMessage"),
@@ -124,6 +130,22 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
         let taskInfo: ITaskInfo = {
             url: this.state.url,
             title: this.localize("NewMessage"),
+            height: 530,
+            width: 1000,
+            fallbackUrl: this.state.url,
+        }
+
+        let submitHandler = (err: any, result: any) => {
+            this.props.getDraftMessagesList();
+        };
+
+        microsoftTeams.tasks.startTask(taskInfo, submitHandler);
+    }
+
+    public onNewCustomMessage = () => {
+        let taskInfo: ITaskInfo = {
+            url: this.state.urlCustomMessage,
+            title: this.localize("NewCustomAdaptiveCardMessage"),
             height: 530,
             width: 1000,
             fallbackUrl: this.state.url,

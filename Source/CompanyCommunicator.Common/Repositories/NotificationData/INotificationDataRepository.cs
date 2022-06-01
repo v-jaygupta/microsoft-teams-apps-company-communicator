@@ -90,5 +90,15 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         /// <param name="blobName">Blob name.</param>
         /// <returns>Image in base64 format.</returns>
         public Task<string> GetImageAsync(string prefix, string blobName);
+
+        /// <summary>
+        /// Save custom adaptive card to the blob storage.
+        /// </summary>
+        /// <param name="blobName">notification id</param>
+        /// <param name="acPayload">json</param>
+        /// <returns></returns>
+        public Task SaveCustomAdaptiveCardAsync(string blobName, string acPayload);
+
+        public Task<string> GetCustomAdaptiveCardAsync(string blobName);
     }
 }

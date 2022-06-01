@@ -18,18 +18,22 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Prep.Func.PreparingToSend
     public class StoreMessageActivity
     {
         private readonly ISendingNotificationDataRepository sendingNotificationDataRepository;
+        private readonly INotificationDataRepository notificationDataRepository;
         private readonly AdaptiveCardCreator adaptiveCardCreator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StoreMessageActivity"/> class.
         /// </summary>
-        /// <param name="notificationRepo">Sending notification data repository.</param>
+        /// <param name="notificationRepo">Notification data repository.</param>
+        /// <param name="sendingNotificationRepo">Sending notification data repository.</param>
         /// <param name="cardCreator">The adaptive card creator.</param>
         public StoreMessageActivity(
-            ISendingNotificationDataRepository notificationRepo,
+            ISendingNotificationDataRepository sendingNotificationRepo,
+            INotificationDataRepository notificationRepo,
             AdaptiveCardCreator cardCreator)
         {
-            this.sendingNotificationDataRepository = notificationRepo ?? throw new ArgumentNullException(nameof(notificationRepo));
+            this.sendingNotificationDataRepository = sendingNotificationRepo ?? throw new ArgumentNullException(nameof(sendingNotificationRepo));
+            this.notificationDataRepository = notificationRepo ?? throw new ArgumentNullException(nameof(notificationRepo));
             this.adaptiveCardCreator = cardCreator ?? throw new ArgumentNullException(nameof(cardCreator));
         }
 
@@ -47,18 +51,25 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Prep.Func.PreparingToSend
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            // In case we have blob name instead of URL to public image.
-            if (!string.IsNullOrEmpty(notification.ImageBase64BlobName)
-                && notification.ImageLink.StartsWith(Common.Constants.ImageBase64Format))
+            if (notification.MessageType != "CustomAC")
             {
-                notification.ImageLink += await this.sendingNotificationDataRepository.GetImageAsync(notification.ImageBase64BlobName);
+                // In case we have blob name instead of URL to public image.
+                if (!string.IsNullOrEmpty(notification.ImageBase64BlobName)
+                    && notification.ImageLink.StartsWith(Common.Constants.ImageBase64Format))
+                {
+                    notification.ImageLink += await this.sendingNotificationDataRepository.GetImageAsync(notification.ImageBase64BlobName);
+                }
+
+                var serializedContent = this.adaptiveCardCreator.CreateAdaptiveCard(notification).ToJson();
+
+                // Save Adaptive Card with data uri into blob storage. Blob name = notification.Id.
+                await this.sendingNotificationDataRepository.SaveAdaptiveCardAsync(notification.Id, serializedContent);
             }
-
-            var serializedContent = this.adaptiveCardCreator.CreateAdaptiveCard(notification).ToJson();
-
-
-            // Save Adaptive Card with data uri into blob storage. Blob name = notification.Id.
-            await this.sendingNotificationDataRepository.SaveAdaptiveCardAsync(notification.Id, serializedContent);
+            else
+            {
+                var ac = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notification.Summary);
+                await this.sendingNotificationDataRepository.SaveAdaptiveCardAsync(notification.Id, ac);
+            }
 
             var sendingNotification = new SendingNotificationDataEntity
             {

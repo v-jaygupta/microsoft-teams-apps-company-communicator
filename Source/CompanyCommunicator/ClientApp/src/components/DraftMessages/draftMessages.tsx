@@ -124,6 +124,10 @@ class DraftMessages extends React.Component<IMessageProps, IMessageState> {
                         let url = getBaseUrl() + "/newpoll/" + message.id + "?locale={locale}";
                         this.onOpenTaskModule(null, url, this.localize("EditPoll"));  
                     }
+                    else if (message.messageType === 'CustomAC') {
+                        let url = getBaseUrl() + "/newcustommessage/" + message.id + "?locale={locale}";
+                        this.onOpenTaskModule(null, url, this.localize("EditCustomAdaptiveCardMessage"));
+                    }
                     else {
                         let url = getBaseUrl() + "/newmessage/" + message.id + "?locale={locale}";
                         this.onOpenTaskModule(null, url, this.localize("EditMessage"));

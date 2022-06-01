@@ -59,20 +59,27 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Models
 
         public bool Ack { get; set; }
 
-        public bool InlineTranslation { get; set; }
-
         ///// <summary>
         ///// Gets or sets the Scheduled Date and Time value.
         ///// </summary>
         public DateTime? ScheduledDateTime { get; set; }
 
+        public bool InlineTranslation { get; set; }
+
         public bool NotifyUser { get; set; }
 
         public bool FullWidth { get; set; }
 
+        public bool OnBehalfOf { get; set; }
+
+        public bool StageView { get; set; }
+
         public string PollOptions { get; set; }
 
         public string MessageType { get; set; }
+
+        public string ACPayload { get; set; }
+
         public string PollQuizAnswers { get; set; }
 
         public bool IsPollQuizMode { get; set; }

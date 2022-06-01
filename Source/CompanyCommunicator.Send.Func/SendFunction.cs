@@ -19,12 +19,15 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Extensions;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.NotificationData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotificationData;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.UserData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Resources;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MessageQueues.SendQueue;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Teams;
     using Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Entity = Common.Services.AdaptiveCard.Entity;
 
     /// <summary>
     /// Azure Function App triggered by messages from a Service Bus queue
@@ -44,6 +47,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
         private readonly INotificationService notificationService;
         private readonly ISendingNotificationDataRepository sendingNotificationDataRepository;
         private readonly INotificationDataRepository notificationDataRepository;
+        private readonly IUserDataRepository userDataRepository;
         private readonly AdaptiveCardCreator adaptiveCardCreator;
         private readonly IMessageService messageService;
         private readonly ISendQueue sendQueue;
@@ -66,6 +70,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             IMessageService messageService,
             ISendingNotificationDataRepository sendingNotificationDataRepository,
             INotificationDataRepository notificationDataRepository,
+            IUserDataRepository userDataRepository,
             AdaptiveCardCreator adaptiveCardCreator,
             ISendQueue sendQueue,
             IStringLocalizer<Strings> localizer)
@@ -85,6 +90,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             this.messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
             this.sendingNotificationDataRepository = sendingNotificationDataRepository ?? throw new ArgumentNullException(nameof(sendingNotificationDataRepository));
             this.notificationDataRepository = notificationDataRepository ?? throw new ArgumentNullException(nameof(notificationDataRepository));
+            this.userDataRepository = userDataRepository ?? throw new ArgumentNullException(nameof(userDataRepository));
+
             this.adaptiveCardCreator = adaptiveCardCreator ?? throw new ArgumentNullException(nameof(adaptiveCardCreator));
             this.sendQueue = sendQueue ?? throw new ArgumentNullException(nameof(sendQueue));
             this.localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
@@ -268,10 +275,20 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
 
         private async Task<IMessageActivity> GetMessageActivity(SendQueueMessageContent message)
         {
-            // Download serialized AC from blob storage.
-           // var jsonAC = await this.sendingNotificationDataRepository.GetAdaptiveCardAsync(message.NotificationId);
-
             var notification = await this.notificationDataRepository.GetAsync(NotificationDataTableNames.SentNotificationsPartition, message.NotificationId);
+
+            if (notification.MessageType == "CustomAC")
+            {
+                var customCard = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notification.Summary);
+                var adaptiveCard = AdaptiveCard.FromJson(customCard);
+                var acAttachment = new Attachment()
+                {
+                    ContentType = AdaptiveCard.ContentType,
+                    Content = JsonConvert.DeserializeObject(adaptiveCard.Card.ToJson()),
+                };
+                var msg = MessageFactory.Attachment(acAttachment);
+                return msg;
+            }
 
             // Download base64 data from blob convert to base64 string.
             if (!string.IsNullOrEmpty(notification.ImageBase64BlobName))
@@ -279,27 +296,37 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                 notification.ImageLink = await this.notificationDataRepository.GetImageAsync(notification.ImageLink, notification.ImageBase64BlobName);
             }
 
-            Root root = null;
-            if (!string.IsNullOrWhiteSpace(notification.Summary) && notification.Summary.Contains("[user]"))
+            List<Entity> mentions = null;
+            if (message.RecipientData.RecipientType == RecipientDataType.User && !string.IsNullOrWhiteSpace(notification.Summary) && notification.Summary.Contains("[user]"))
             {
-                notification.Summary = notification.Summary.Replace("[user]", "<at></at>");
+                var userDataEntity = await this.userDataRepository.GetAsync(UserDataTableNames.UserDataPartition, message.RecipientData.RecipientId);
+                var atUser = string.Format("<at>{0}</at>", userDataEntity.Name);
+                notification.Summary = notification.Summary.Replace("[user]", atUser);
                 var mentionEntity = new Entity()
                 {
                     type = "mention",
-                    text = "<at></at>",
+                    text = atUser,
                     mentioned = new Mentioned()
                     {
                         id = message.RecipientData.RecipientId,
-                        name = "",
+                        name = userDataEntity.Name,
                     },
                 };
-                root = new Root() { entities = new List<Entity>() { mentionEntity } };
+                mentions = new List<Entity>() { mentionEntity };
             }
 
             var card = this.adaptiveCardCreator.CreateAdaptiveCard(notification);
-            if (root != null)
+            if (mentions != null && notification.FullWidth)
             {
-                card.AdditionalProperties.Add("msteams", root);
+                card.AdditionalProperties.Add("msteams", new { width = "full", entities = mentions });
+            }
+            else if (mentions == null && notification.FullWidth)
+            {
+                card.AdditionalProperties.Add("msteams", new { width = "full" });
+            }
+            else if (mentions != null && !notification.FullWidth)
+            {
+                card.AdditionalProperties.Add("msteams", mentions);
             }
 
             if (message.RecipientData.RecipientType == RecipientDataType.User)
@@ -307,7 +334,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                 var uniqueUser = this.trackViewClickPII ? message.RecipientData.RecipientId : Guid.NewGuid().ToString();
 
                 // TODO: do we need to encode this URI?
-                // TODO: use & istead of custom delimiter? or it will be fail for Teams AC ????
+                // TODO: use & instead of custom delimiter? or it will be failed for Teams AC ????
                 var trackImageUrl = $"{this.appBaseUri}/track?url={message.NotificationId}-{uniqueUser}.gif";
 
                 var pixel = new AdaptiveImage()
@@ -351,35 +378,33 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                 Content = JsonConvert.DeserializeObject(card.ToJson()),
             };
             var messageActivity = MessageFactory.Attachment(adaptiveCardAttachment);
+
+            #region Experimental options
             if (notification.NotifyUser)
             {
                 messageActivity.TeamsNotifyUser();
             }
 
+            if (!string.IsNullOrWhiteSpace(notification.Author) && notification.OnBehalfOf)
+            {
+                var onBehalfOf = new OnBehalfOfEntity[1];
+                onBehalfOf[0] = new OnBehalfOfEntity()
+                {
+                    ItemId = 0,
+                    MentionType = "person",
+                    Mri = "29:orgid:" + message.RecipientData.RecipientId,
+                    DisplayName = notification.Author,
+                };
+
+                messageActivity.ChannelData = JObject.FromObject(new
+                {
+                    OnBehalfOf = onBehalfOf,
+                });
+            }
+            #endregion
+
             messageActivity.Summary = notification.Title;
             return messageActivity;
         }
     }
-
-    public class Mentioned
-    {
-        public string id { get; set; }
-
-        public string name { get; set; }
-    }
-
-    public class Entity
-    {
-        public string type { get; set; }
-
-        public string text { get; set; }
-
-        public Mentioned mentioned { get; set; }
-    }
-
-    public class Root
-    {
-        public List<Entity> entities { get; set; }
-    }
-
 }

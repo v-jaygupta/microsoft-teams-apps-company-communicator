@@ -47,10 +47,15 @@ export interface IDraftMessage {
 
     ack?: boolean,
     delayDelivery?: boolean,
-    inlineTranslation?: boolean,
     scheduledDateTime?: Date,
+
     fullWidth?: boolean,
     notifyUser?: boolean,
+    onBehalfOf?: boolean,
+    inlineTranslation?: boolean,
+    stageView?: boolean,
+
+    messageType?: string,
 }
 
 export interface formState {
@@ -86,10 +91,16 @@ export interface formState {
     errorButtonUrlMessage: string,
     selectedRequestReadReceipt?: boolean,
     selectedDelayDelivery?: boolean,
-    selectedInlineTranslation?: boolean,
     selectedScheduledDateTime?: Date,
-    fullWidth?: boolean,
-    notifyUser?: boolean,
+
+    selectedFullWidth?: boolean,
+    selectedNotifyUser?: boolean,
+    selectedOnBehalfOf?: boolean,
+    selectedInlineTranslation?: boolean,
+    selectedStageView?: boolean,
+
+    messageType: string,
+    templates: string[];
 }
 
 export interface INewMessageProps extends RouteComponentProps, WithTranslation {
@@ -133,11 +144,19 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             selectedTeams: [],
             selectedRosters: [],
             selectedGroups: [],
-            selectedRequestReadReceipt: false,
-            selectedInlineTranslation: false,
+            selectedRequestReadReceipt: false,            
             selectedScheduledDateTime: new Date(),
+
+            selectedInlineTranslation: false,
+            selectedFullWidth: false,
+            selectedNotifyUser: false,
+            selectedOnBehalfOf: false,
+            selectedStageView: false,
+
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
+            messageType: "",
+            templates: []
         }
 
         this.fileInput = React.createRef();
@@ -313,14 +332,15 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                 selectedRosters: draftMessageDetail.rosters,
                 selectedGroups: draftMessageDetail.groups,
 
-                selectedRequestReadReceipt: draftMessageDetail.ack,
-                selectedInlineTranslation: draftMessageDetail.inlineTranslation,
+                selectedRequestReadReceipt: draftMessageDetail.ack,                
                 selectedScheduledDateTime: draftMessageDetail.scheduledDateTime !== null ? new Date(draftMessageDetail.scheduledDateTime) : draftMessageDetail.scheduledDateTime,
-
                 selectedDelayDelivery: draftMessageDetail.scheduledDateTime !== null,
-                
-                fullWidth: draftMessageDetail.fullWidth,
-                notifyUser: draftMessageDetail.notifyUser,
+
+                selectedFullWidth: draftMessageDetail.fullWidth,
+                selectedNotifyUser: draftMessageDetail.notifyUser,
+                selectedInlineTranslation: draftMessageDetail.inlineTranslation,
+                selectedOnBehalfOf: draftMessageDetail.onBehalfOf,
+                selectedStageView: draftMessageDetail.stageView,
             });
 
             setCardTitle(this.card, draftMessageDetail.title);
@@ -471,8 +491,11 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                 value={this.state.summary}
                                                 onChange={this.onSummaryChanged}
                                                 id="summaryTextArea"
-                                                fluid />
+                                                fluid
+                                                resize="vertical"
+                                            />                                            
                                         </div>
+                                        <Checkbox label="Full Width" className="inputField" checked={this.state.selectedFullWidth} onChange={this.onFullWidthChanged} />
 
                                         <Input className="inputField"
                                             value={this.state.author}
@@ -482,6 +505,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                             autoComplete="off"
                                             fluid
                                         />
+                                        <Checkbox label="On behalf Of" className="inputField" checked={this.state.selectedOnBehalfOf} onChange={this.onBehalfOfChanged} />
                                         <Input className="inputField"
                                             fluid
                                             value={this.state.btnTitle}
@@ -500,6 +524,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                             autoComplete="off"
                                         />
                                         <Text className={(this.state.errorButtonUrlMessage === "") ? "hide" : "show"} error size="small" content={this.state.errorButtonUrlMessage} />
+                                        <Checkbox label="Stage view" checked={this.state.selectedStageView} onChange={this.onStageViewChanged} />
                                     </Flex>
                                 </Flex.Item>
                                 <Flex.Item size="size.half">
@@ -711,6 +736,23 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         })
     }
 
+    private onBehalfOfChanged = (event: any, data: any) => {
+        this.setState({
+            selectedOnBehalfOf: data.checked,
+        })
+    }
+
+    private onStageViewChanged = (event: any, data: any) => {
+        this.setState({
+            selectedStageView: data.checked,
+        })
+    }
+
+    private onFullWidthChanged = (event: any, data: any) => {
+        this.setState({
+            selectedFullWidth: data.checked,
+        })
+    }
 
     /**
     * Event handler on start time change
@@ -903,12 +945,14 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             rosters: selctedRosters,
             groups: selectedGroups,
             allUsers: this.state.allUsersOptionSelected,
-
             ack: this.state.selectedRequestReadReceipt,
-            inlineTranslation: this.state.selectedInlineTranslation,
             scheduledDateTime: this.state.selectedDelayDelivery ? this.state.selectedScheduledDateTime : undefined,
-            fullWidth: this.state.fullWidth,
-            notifyUser: this.state.notifyUser,
+
+            fullWidth: this.state.selectedFullWidth,
+            notifyUser: this.state.selectedNotifyUser,
+            inlineTranslation: this.state.selectedInlineTranslation,
+            onBehalfOf: this.state.selectedOnBehalfOf,
+            stageView: this.state.selectedStageView,
         };
 
         if (this.state.exists) {

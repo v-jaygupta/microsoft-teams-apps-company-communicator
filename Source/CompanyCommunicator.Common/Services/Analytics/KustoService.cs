@@ -36,7 +36,7 @@
                           + "| where name == 'TrackPollVote' and notificationId == '{0}'  | summarize dcount(userId) by vote";
 
         /// <summary>
-        /// Coveres multi-choice and quiz cases.
+        /// For multi-choice and quiz cases.
         /// </summary>
         private readonly string totalVotesFromUniqueUsers = "customEvents | extend notificationId = tostring(customDimensions['notificationId']), userId = tostring(customDimensions['userId'])"
                           + "| where name == 'TrackPollVote' and notificationId == '{0}' | summarize dcount(userId)";
