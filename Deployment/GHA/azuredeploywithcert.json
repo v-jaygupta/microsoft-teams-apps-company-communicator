@@ -376,6 +376,9 @@
         "name": "Basic",
         "tier": "Basic"
       },
+      "properties": {
+            "minimumTlsVersion": "1.2"
+      },
       "resources": [
         {
           "type": "Queues",
