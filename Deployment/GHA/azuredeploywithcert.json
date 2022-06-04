@@ -363,7 +363,8 @@
       "kind": "Storage",
       "properties": {
         "supportsHttpsTrafficOnly": true,
-        "allowBlobPublicAccess": false
+        "allowBlobPublicAccess": false,
+		"minimumTlsVersion": "TLS1_2"
       }
     },
     {
@@ -377,7 +378,7 @@
         "tier": "Basic"
       },
       "properties": {
-            "minimumTlsVersion": "1.2"
+        "minimumTlsVersion": "1.2"
       },
       "resources": [
         {
@@ -502,7 +503,7 @@
     },
     {
       "type": "Microsoft.BotService/botServices",
-      "apiVersion": "2018-07-12",
+      "apiVersion": "2021-03-01",
       "name": "[variables('authorBotName')]",
       "location": "global",
       "tags": "[parameters('tags')]",
@@ -521,7 +522,7 @@
       "resources": [
         {
           "type": "Microsoft.BotService/botServices/channels",
-          "apiVersion": "2018-07-12",
+          "apiVersion": "2021-03-01",
           "name": "[concat(variables('authorBotName'), '/MsTeamsChannel')]",
           "location": "global",
           "dependsOn": [
@@ -542,7 +543,7 @@
     },
     {
       "type": "Microsoft.BotService/botServices",
-      "apiVersion": "2018-07-12",
+      "apiVersion": "2021-03-01",
       "name": "[variables('botName')]",
       "location": "global",
       "tags": "[parameters('tags')]",
@@ -561,7 +562,7 @@
       "resources": [
         {
           "type": "Microsoft.BotService/botServices/channels",
-          "apiVersion": "2018-07-12",
+          "apiVersion": "2021-03-01",
           "name": "[concat(variables('botName'), '/MsTeamsChannel')]",
           "location": "global",
           "dependsOn": [
