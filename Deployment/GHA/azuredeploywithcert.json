@@ -364,7 +364,7 @@
       "properties": {
         "supportsHttpsTrafficOnly": true,
         "allowBlobPublicAccess": false,
-		"minimumTlsVersion": "TLS1_2"
+        "minimumTlsVersion": "TLS1_2"
       }
     },
     {
@@ -650,6 +650,9 @@
             "AuthorAppCertName": "[parameters('authorAppCertName')]",
             "GraphAppId": "[parameters('graphAppId')]",
             "GraphAppCertName": "[parameters('graphAppCertName')]",
+			"AppInsightsId": "",
+			"AppInsightsApiKey": "",
+			"TranslatorKey": "",
             "StorageAccountConnectionString": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('StorageAccountSecretResourceId'),'2015-06-01').secretUriWithVersion, ')')]",
             "ServiceBusConnection": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('ServiceBusSecretResourceId'),'2015-06-01').secretUriWithVersion, ')')]",
             "ServiceBusNamespace": "[concat(variables('serviceBusNamespaceName'),'.servicebus.windows.net')]",
@@ -813,6 +816,8 @@
             "i18n:DefaultCulture": "[variables('i18n:DefaultCulture')]",
             "i18n:SupportedCultures": "[variables('i18n:SupportedCultures')]",
             "ProactivelyInstallUserApp": "[variables('ProactivelyInstallUserApp')]",
+			"AppBaseUri": "[concat('https://', variables('frontDoorDomain'))]",
+			"TrackViewClickPII": "false",
             "UserAppId": "[parameters('userClientId')]",
             "UserAppCertName": "[parameters('userAppCertName')]",
             "AuthorAppId": "[parameters('authorClientId')]",
