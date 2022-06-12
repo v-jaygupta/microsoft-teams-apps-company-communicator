@@ -46,6 +46,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Prep.Func.PreparingToSend
         public const string SyncAllUsersActivity = nameof(SyncAllUsersActivity);
 
         /// <summary>
+        /// Sync custom upn user list activity function.
+        /// </summary>
+        public const string SyncCustomUserListActivity = nameof(SyncCustomUserListActivity);
+
+        /// <summary>
         /// Sync Team members activity function.
         /// </summary>
         public const string SyncTeamMembersActivity = nameof(SyncTeamMembersActivity);

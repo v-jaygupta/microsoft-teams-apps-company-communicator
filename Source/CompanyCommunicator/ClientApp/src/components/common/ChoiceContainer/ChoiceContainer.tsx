@@ -55,7 +55,7 @@ class ChoiceContainer extends React.Component<IChoiceContainerProps> {
                 content: <TrashCanIcon className="choice-trash-can" outline={true} aria-hidden="false"
                     title={this.props.options[i].deleteChoiceLabel}
                     onClick={() => {
-                        if (this.currentFocus == this.props.options.length - 1) {
+                        if (this.currentFocus === this.props.options.length - 1) {
                             setTimeout((() => {
                                 this.addButtonRef.focus();
                             }).bind(this), 0);
@@ -113,7 +113,7 @@ class ChoiceContainer extends React.Component<IChoiceContainerProps> {
                         <div className="checklist-input-box">
                             <InputBox
                                 ref={(inputBox) => {
-                                    if (inputBox && i == this.currentFocus) {
+                                    if (inputBox && i === this.currentFocus) {
                                         inputBox.focus();
                                     }
                                 }}
@@ -128,9 +128,9 @@ class ChoiceContainer extends React.Component<IChoiceContainerProps> {
                                 value={this.props.options[i].value}
                                 placeholder={this.props.options[i].choicePlaceholder}
                                 onKeyDown={(e) => {
-                                    if (!e.repeat && (e.keyCode || e.which) == ChoiceContainer.CARRIAGE_RETURN_ASCII_VALUE
+                                    if (!e.repeat && (e.keyCode || e.which) === ChoiceContainer.CARRIAGE_RETURN_ASCII_VALUE
                                         && this.props.options.length < maxOptions) {
-                                        if (i == this.props.options.length - 1) {
+                                        if (i === this.props.options.length - 1) {
                                             this.props.onAddChoice();
                                             this.currentFocus = this.props.options.length;
                                         } else {

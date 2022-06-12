@@ -27,7 +27,7 @@
                           + "| where name == 'TrackUrl'  and notificationId == '{0}' | summarize Count=dcount(userId) by notificationId";
 
         private readonly string acknowledgementsCountKustoQuery = "customEvents| extend notificationId = tostring(customDimensions['notificationId']), userId = tostring(customDimensions['userId'])"
-                          + "| where name == 'TrackAck'  and notificationId == '{0}' | summarize Count= count() by notificationId";
+                          + "| where name == 'TrackAck'  and notificationId == '{0}' | summarize Count=dcount(userId) by notificationId";
 
         private readonly string reactionsKustoQuery = "customEvents| extend notificationId = tostring(customDimensions['notificationId']), userId = tostring(customDimensions['userId'])"
                           + "| where name == 'TrackReaction'  and notificationId == '{0}' | summarize Count=dcount(userId) by notificationId";

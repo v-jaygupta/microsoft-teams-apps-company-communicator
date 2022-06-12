@@ -33,7 +33,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
         [FunctionName("DelaySendFunction")]
         public async Task Run([TimerTrigger("0 */5 * * * *")]TimerInfo myTimer, ILogger log)
         {
-            log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
+            log.LogInformation($"DelaySendFunction trigger function executed at: {DateTime.Now}");
 
             var notificationEntities = await this.notificationDataRepository.GetAllDraftNotificationsAsync();
             foreach (var draft in notificationEntities)
@@ -55,7 +55,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                     await this.sentNotificationDataRepository.EnsureSentNotificationDataTableExistsAsync();
 
                     // Update user app id if proactive installation is enabled.
-                    //await this.UpdateUserAppIdAsync();
+                    // await this.UpdateUserAppIdAsync();
 
                     var prepareToSendQueueMessageContent = new PrepareToSendQueueMessageContent
                     {

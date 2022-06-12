@@ -56,6 +56,7 @@ export interface IDraftMessage {
     stageView?: boolean,
 
     messageType?: string,
+    usersList: string
 }
 
 export interface formState {
@@ -101,6 +102,8 @@ export interface formState {
 
     messageType: string,
     templates: string[];
+
+    usersList: string;
 }
 
 export interface INewMessageProps extends RouteComponentProps, WithTranslation {
@@ -156,7 +159,8 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
             messageType: "",
-            templates: []
+            templates: [],
+            usersList: "",
         }
 
         this.fileInput = React.createRef();
@@ -318,6 +322,9 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             else if (draftMessageDetail.allUsers) {
                 selectedRadioButton = "allUsers";
             }
+            else if (draftMessageDetail.usersList && draftMessageDetail.usersList.length > 0) {
+                selectedRadioButton = "csv";
+            }
 
             console.log(draftMessageDetail.scheduledDateTime);
             this.setState({
@@ -357,6 +364,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                 btnTitle: draftMessageDetail.buttonTitle,
                 author: draftMessageDetail.author,
                 allUsersOptionSelected: draftMessageDetail.allUsers,
+                usersList: draftMessageDetail.usersList,
                 loader: false
             }, () => {
                 this.updateCard();
@@ -443,6 +451,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                 <Flex.Item size="size.half">
                                     <Flex column className="formContentContainer">
                                         <Input className="inputField"
+                                            autoFocus
                                             value={this.state.title}
                                             label={this.localize("TitleText")}
                                             placeholder={this.localize("PlaceHolderTitle")}
@@ -485,8 +494,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                     h3: false,
                                                     image: false
                                                 }} />
-                                            <TextArea
-                                                autoFocus
+                                            <TextArea                                                
                                                 placeholder={this.localize("Summary")}
                                                 value={this.state.summary}
                                                 onChange={this.onSummaryChanged}
@@ -495,8 +503,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                 resize="vertical"
                                             />                                            
                                         </div>
-                                        <Checkbox label="Full Width" className="inputField" checked={this.state.selectedFullWidth} onChange={this.onFullWidthChanged} />
-
+                                        
                                         <Input className="inputField"
                                             value={this.state.author}
                                             label={this.localize("Author")}
@@ -505,7 +512,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                             autoComplete="off"
                                             fluid
                                         />
-                                        <Checkbox label="On behalf Of" className="inputField" checked={this.state.selectedOnBehalfOf} onChange={this.onBehalfOfChanged} />
+                                        <Checkbox label={this.localize("OnBehalfOf")} className="inputField" checked={this.state.selectedOnBehalfOf} onChange={this.onBehalfOfChanged} />
                                         <Input className="inputField"
                                             fluid
                                             value={this.state.btnTitle}
@@ -659,18 +666,70 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                             </Flex>
                                                         )
                                                     },
-                                                }
+                                                },
+                                                {
+                                                    name: "csv",
+                                                    key: "csv",
+                                                    value: "csv",
+                                                    label: this.localize("SendToCSVUsers"),
+                                                    children: (Component, { name, ...props }) => {
+                                                        return (
+                                                            <Flex key={name} column>
+                                                                <Component {...props} />
+                                                                <TextArea
+                                                                    placeholder={this.localize("Users")}
+                                                                    value={this.state.usersList}
+                                                                    onChange={this.onUsersListChanged}
+                                                                    id="csvUsers"
+                                                                    disabled={this.state.selectedRadioBtn !== "csv"}
+                                                                    fluid resize="both" variables={{ 'height': '150px' }} />
+                                                                <div className={this.state.selectedRadioBtn === "csv" ? "" : "hide"}>
+                                                                    <div className="noteText">
+                                                                        <Text error content={this.localize("SupportedDelimiters")} />
+                                                                    </div>
+                                                                </div>
+                                                            </Flex>
+                                                        )
+                                                    },
+                                                },
                                             ]}
                                         >
 
-                                        </RadioGroup>
+                                        </RadioGroup>                                        
+                                    </Flex>
+                                </Flex.Item>
+                                <Flex.Item size="size.half">
+                                    <div className="adaptiveCardContainer">
+                                    </div>
+                                </Flex.Item>
+                            </Flex>
+                            <Flex className="footerContainer" vAlign="end" hAlign="end">
+                                <Flex className="buttonContainer">
+                                    <Flex.Item push>
+                                        <Button content={this.localize("Back")} disabled={this.isBackBtnDisabled()} onClick={this.onBack} secondary />
+                                    </Flex.Item>
+                                    <Button content={this.localize("Next")} disabled={this.isNextBtnDisabled()} id="saveBtn" onClick={this.onNext} primary />
+                                </Flex>
+                            </Flex>
+                        </Flex>
+                    </div>
+                );
+            }
+            else if (this.state.page === "AdditionalOptions") {
+                return (
+                    <div className="taskModule">
+                        <Flex column className="formContainer" vAlign="stretch" gap="gap.small">
+                            <Flex className="scrollableContent">
+                                <Flex.Item size="size.half">
+                                    <Flex column className="formContentContainer">
                                         <h3>{this.localize("SendOptions")}</h3>
-                                        
                                         <Checkbox label={this.localize("RequestReadReceipt")}
-                                            checked={this.state.teamsOptionSelected ? false: this.state.selectedRequestReadReceipt}
+                                            checked={this.state.teamsOptionSelected ? false : this.state.selectedRequestReadReceipt}
                                             onChange={this.onRequestReadReceiptChanged} disabled={this.state.teamsOptionSelected} />
+                                        
                                         <Checkbox label={this.localize("DelayDelivery")} checked={this.state.selectedDelayDelivery}
                                             onChange={this.onDelayDeliveryChanged} />
+
                                         <Flex gap="gap.smaller">
                                             <Flex.Item>
                                                 <LocalizedDatePicker
@@ -688,8 +747,12 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                                     isDisabled={!this.state.selectedDelayDelivery}
                                                     onPickerClose={this.onDeliveryTimeChange}
                                                     dir={LanguageDirection.Ltr} />
-                                            </Flex.Item>                                                                                      
+                                            </Flex.Item>
                                         </Flex>
+                                        <Checkbox label={this.localize("FullWidth")} className="inputField" checked={this.state.selectedFullWidth} onChange={this.onFullWidthChanged} />
+                                        <Checkbox label={this.localize("AllowInlineTranslation")} checked={this.state.selectedInlineTranslation} onChange={this.onInlineTranslationChanged} />
+                                        <Checkbox label={this.localize("NotifyUser")} checked={this.state.selectedNotifyUser} onChange={this.onNotifyUserChanged} />
+
                                     </Flex>
                                 </Flex.Item>
                                 <Flex.Item size="size.half">
@@ -697,13 +760,14 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
                                     </div>
                                 </Flex.Item>
                             </Flex>
+
                             <Flex className="footerContainer" vAlign="end" hAlign="end">
                                 <Flex className="buttonContainer" gap="gap.small">
                                     <Flex.Item push>
                                         <Loader id="sendingLoader" className="hiddenLoader sendingLoader" size="smallest" label={this.localize("PreparingMessageLabel")} labelPosition="end" />
                                     </Flex.Item>
                                     <Flex.Item push>
-                                        <Button content={this.localize("Back")} onClick={this.onBack} secondary />
+                                        <Button content={this.localize("Back")} disabled={this.isBackBtnDisabled()} onClick={this.onBack} secondary />
                                     </Flex.Item>
                                     <Button content={this.localize("SaveAsDraft")} disabled={this.isSaveBtnDisabled()} id="saveBtn" onClick={this.onSave} primary />
                                 </Flex>
@@ -754,6 +818,12 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         })
     }
 
+    private onNotifyUserChanged = (event: any, data: any) => {
+        this.setState({
+            selectedNotifyUser: data.checked,
+        })
+    }
+
     /**
     * Event handler on start time change
     */
@@ -763,15 +833,17 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
         this.setState({ selectedScheduledDateTime: date });
     }
 
-    private onDeliveryDateChangedOld = (e: any, v: any) => {
-        console.log(this.state.selectedScheduledDateTime);
-        console.log(v.value);
-        this.setState({ selectedScheduledDateTime: v.value });
-    }
-
     private onDeliveryDateChanged = (date: Date) => {
         console.log(date);
         this.setState({ selectedScheduledDateTime: date });
+    }
+
+    private onUsersListChanged = (event: any): void => {
+        let list = event.target.value;
+        list = list.replace(/(?:\\[rn]|[\r\n]+)+/g, ",");
+        this.setState({
+            usersList: list,
+        });
     }
 
 
@@ -792,6 +864,10 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     }
 
     private isSaveBtnDisabled = () => {
+        const customUsers = (this.state.usersList !== null && this.state.usersList.length > 0);
+        if (customUsers && (this.state.selectedRadioBtn === "csv")) {
+            return false;
+        }
         const teamsSelectionIsValid = (this.state.teamsOptionSelected && (this.state.selectedTeamsNum !== 0)) || (!this.state.teamsOptionSelected);
         const rostersSelectionIsValid = (this.state.rostersOptionSelected && (this.state.selectedRostersNum !== 0)) || (!this.state.rostersOptionSelected);
         const groupsSelectionIsValid = (this.state.groupsOptionSelected && (this.state.selectedGroupsNum !== 0)) || (!this.state.groupsOptionSelected);
@@ -800,10 +876,23 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     }
 
     private isNextBtnDisabled = () => {
-        const title = this.state.title;
-        const btnTitle = this.state.btnTitle;
-        const btnLink = this.state.btnLink;
-        return !(title && ((btnTitle && btnLink) || (!btnTitle && !btnLink)) && (this.state.errorImageUrlMessage === "") && (this.state.errorButtonUrlMessage === ""));
+        const current = this.state.page;
+        if (current === "AudienceSelection") {
+            return this.isSaveBtnDisabled();
+        }
+        else {
+            const title = this.state.title;
+            const btnTitle = this.state.btnTitle;
+            const btnLink = this.state.btnLink;
+            return !(title && ((btnTitle && btnLink) || (!btnTitle && !btnLink)) && (this.state.errorImageUrlMessage === "") && (this.state.errorButtonUrlMessage === ""));
+        }
+    }
+
+    private isBackBtnDisabled = () => {
+        const current = this.state.page;
+        if (current === "AudienceSelection") {
+            return this.isSaveBtnDisabled();
+        }
     }
 
     private getItems = () => {
@@ -953,6 +1042,7 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
             inlineTranslation: this.state.selectedInlineTranslation,
             onBehalfOf: this.state.selectedOnBehalfOf,
             stageView: this.state.selectedStageView,
+            usersList: this.state.selectedRadioBtn === "csv" ? this.state.usersList : "",
         };
 
         if (this.state.exists) {
@@ -989,16 +1079,22 @@ class NewMessage extends React.Component<INewMessageProps, formState> {
     }
 
     private onNext = (event: any) => {
+        const current = this.state.page;
+        let next: string = (current === "CardCreation") ? "AudienceSelection" : "AdditionalOptions";
+
         this.setState({
-            page: "AudienceSelection"
+            page: next
         }, () => {
             this.updateCard();
         });
     }
 
     private onBack = (event: any) => {
+        const current = this.state.page;
+        let back: string = (current === "AdditionalOptions") ? "AudienceSelection" : "CardCreation";
+
         this.setState({
-            page: "CardCreation"
+            page: back
         }, () => {
             this.updateCard();
         });

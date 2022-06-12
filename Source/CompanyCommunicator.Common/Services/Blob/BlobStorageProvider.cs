@@ -171,6 +171,55 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob
         }
 
         /// <inheritdoc/>
+        public async Task UploadBlobAsync(string blobName, string payload, string contentType)
+        {
+            try
+            {
+                var blobContainerClient = await this.GetBlobContainer(ImagesBlobContainerName);
+
+                var blob = blobContainerClient.GetBlobClient(blobName);
+                await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+
+                using (var stream = new MemoryStream())
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(payload);
+                    writer.Flush();
+                    stream.Position = 0;
+                    var blobHttpHeader = new BlobHttpHeaders() { ContentType = contentType };
+                    await blob.UploadAsync(stream, blobHttpHeader);
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, $"Error while uploading to Azure Blob Storage.");
+                throw;
+            }
+        }
+
+        public async Task<string> DownloadBlobAsync(string blobName)
+        {
+            try
+            {
+                var blobContainerClient = await this.GetBlobContainer(ImagesBlobContainerName);
+                var blob = blobContainerClient.GetBlobClient(blobName);
+
+                using (var stream = new MemoryStream())
+                using (var reader = new StreamReader(stream))
+                {
+                    await blob.DownloadToAsync(stream);
+                    stream.Position = 0;
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, $"Error while downloading blob from Azure Blob Storage.");
+                throw;
+            }
+        }
+
+        /// <inheritdoc/>
         public async Task<string> DownloadAdaptiveCardAsync(string blobName)
         {
             try

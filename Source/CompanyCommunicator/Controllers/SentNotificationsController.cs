@@ -271,6 +271,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
                 result.ImageLink = await this.notificationDataRepository.GetImageAsync(result.ImageLink, notificationEntity.ImageBase64BlobName);
             }
 
+            if (notificationEntity.MessageType == "CustomAC")
+            {
+                result.Summary = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
+            }
+
             return this.Ok(result);
         }
 

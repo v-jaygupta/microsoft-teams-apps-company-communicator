@@ -99,11 +99,11 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                                 icon: <PollIcon />,
                                 onClick: () => { this.onNewPoll(); },
                             },
-                            //{
-                            //    key: 'newCustomMessage',
-                            //    content: this.localize("NewCustomAdaptiveCardMessage"),
-                            //    onClick: () => { this.onNewCustomMessage(); },
-                            //},
+                            {
+                                key: 'newCustomMessage',
+                                content: this.localize("NewCustomAdaptiveCardMessage"),
+                                onClick: () => { this.onNewCustomMessage(); },
+                            },
                         ]}
                         button={{
                             content: this.localize("NewMessage"),

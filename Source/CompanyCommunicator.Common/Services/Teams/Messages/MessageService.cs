@@ -121,10 +121,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Teams
                                 response.ResultType = SendMessageResult.RecipientNotFound;
                                 break;
 
-                            //case HttpStatusCode.Forbidden:
-                            //    TryToReinstallUserApp();
-                            //    break;
-
                             default:
                                 response.ResultType = SendMessageResult.Failed;
                                 break;
@@ -135,12 +131,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Teams
 
             return response;
         }
-
-        //private void TryToReinstallUserApp()
-        //{
-        //    await this.appManagerService.UninstallAppForUserAsync(appId, RecipientId);
-        //    await this.appManagerService.InstallAppForUserAsync(appId, RecipientId);
-        //}
 
         private AsyncRetryPolicy GetRetryPolicy(int maxAttempts, ILogger log)
         {

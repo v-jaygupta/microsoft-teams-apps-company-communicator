@@ -120,77 +120,81 @@ class StatusTaskModule extends React.Component<StatusTaskModuleProps, IStatusSta
                 this.setState({
                     loader: false
                 }, () => {
-                    setCardTitle(this.card, this.state.message.title);
-                    setCardImageLink(this.card, this.state.message.imageLink);
-                    setCardSummary(this.card, this.state.message.summary);
-                    setCardAuthor(this.card, this.state.message.author);
-
-                    if (this.state.message.pollOptions) {
-                        setCardBtn(this.card, this.localize("PollSubmitVote"), "https://adaptivecards.io");
-                        const options: string[] = JSON.parse(this.state.message.pollOptions);
-                        setCardPollOptions(this.card, this.state.isPollMultipleChoice, options);
-
-                        let choiceOptions = new Map();
-                        let i = 0;
-                        options.forEach((option) => {
-                            const choiceOption = {
-                                title: option,
-                                count: 0,
-                                answer: false,
-                            };
-                            choiceOptions.set(i.toString(), choiceOption);
-                            i++;
-                        });
-
-                        Promise.all([this.getPollResult(id), this.getVotesCount(id), this.getCorrectQuizesCount(id)]).then((responses) => {
-                            console.log('choiceOptions init');
-                            console.log(choiceOptions);
-                            if (this.state.message.isPollQuizMode && this.state.message.pollQuizAnswers) {
-                                const answers: string[] = JSON.parse(this.state.message.pollQuizAnswers);
-                                console.log('answers ');
-                                console.log(answers);
-                                for (var jj = 0; jj < answers.length; jj++) {
-                                    let optionNum = answers[jj];
-                                    console.log("optionNum: " + optionNum);
-                                    let current = choiceOptions.get(optionNum.toString());
-                                    console.log(current);
-                                    current.answer = true;
-                                    choiceOptions.set(optionNum.toString(), current);
-                                }
-                            }
-                            console.log('choiceOptions after quiz answers');
-                            console.log(choiceOptions);
-
-                            let rows = responses[0].data.tables[0].rows;
-                            if (rows) {
-                                for (var j = 0; j < rows.length; j++) {
-                                    let optionNum = rows[j][0];
-                                    let optionCount = rows[j][1];
-                                    console.log("optionNum: " + optionNum + " optionCount: " + optionCount);
-                                    let current = choiceOptions.get(optionNum);
-                                    console.log(current);
-                                    current.count = optionCount;
-                                    choiceOptions.set(optionNum, current);
-                                }
-                            }
-                            console.log('choiceOptions add counts');
-                            console.log(choiceOptions);
-                          
-                            this.setState({
-                                pollResultsChartData:
-                                    { choiceOptions: choiceOptions }
-                            });
-                            console.log(this.state.pollResultsChartData);
-                            
-                        });
+                    if (this.state.message.messageType === 'CustomAC' && this.state.message.summary) {
+                        this.card = JSON.parse(this.state.message.summary);
                     }
                     else {
-                        setCardHidePoll(this.card);
-                    }
+                        setCardTitle(this.card, this.state.message.title);
+                        setCardImageLink(this.card, this.state.message.imageLink);
+                        setCardSummary(this.card, this.state.message.summary);
+                        setCardAuthor(this.card, this.state.message.author);
 
+                        if (this.state.message.pollOptions) {
+                            setCardBtn(this.card, this.localize("PollSubmitVote"), "https://adaptivecards.io");
+                            const options: string[] = JSON.parse(this.state.message.pollOptions);
+                            setCardPollOptions(this.card, this.state.isPollMultipleChoice, options);
 
-                    if (this.state.message.buttonTitle !== "" && this.state.message.buttonLink !== "") {
-                        setCardBtn(this.card, this.state.message.buttonTitle, this.state.message.buttonLink);
+                            let choiceOptions = new Map();
+                            let i = 0;
+                            options.forEach((option) => {
+                                const choiceOption = {
+                                    title: option,
+                                    count: 0,
+                                    answer: false,
+                                };
+                                choiceOptions.set(i.toString(), choiceOption);
+                                i++;
+                            });
+
+                            Promise.all([this.getPollResult(id), this.getVotesCount(id), this.getCorrectQuizesCount(id)]).then((responses) => {
+                                console.log('choiceOptions init');
+                                console.log(choiceOptions);
+                                if (this.state.message.isPollQuizMode && this.state.message.pollQuizAnswers) {
+                                    const answers: string[] = JSON.parse(this.state.message.pollQuizAnswers);
+                                    console.log('answers ');
+                                    console.log(answers);
+                                    for (var jj = 0; jj < answers.length; jj++) {
+                                        let optionNum = answers[jj];
+                                        console.log("optionNum: " + optionNum);
+                                        let current = choiceOptions.get(optionNum.toString());
+                                        console.log(current);
+                                        current.answer = true;
+                                        choiceOptions.set(optionNum.toString(), current);
+                                    }
+                                }
+                                console.log('choiceOptions after quiz answers');
+                                console.log(choiceOptions);
+
+                                let rows = responses[0].data.tables[0].rows;
+                                if (rows) {
+                                    for (var j = 0; j < rows.length; j++) {
+                                        let optionNum = rows[j][0];
+                                        let optionCount = rows[j][1];
+                                        console.log("optionNum: " + optionNum + " optionCount: " + optionCount);
+                                        let current = choiceOptions.get(optionNum);
+                                        console.log(current);
+                                        current.count = optionCount;
+                                        choiceOptions.set(optionNum, current);
+                                    }
+                                }
+                                console.log('choiceOptions add counts');
+                                console.log(choiceOptions);
+
+                                this.setState({
+                                    pollResultsChartData:
+                                        { choiceOptions: choiceOptions }
+                                });
+                                console.log(this.state.pollResultsChartData);
+
+                            });
+                        }
+                        else {
+                            setCardHidePoll(this.card);
+                        }
+
+                        if (this.state.message.buttonTitle !== "" && this.state.message.buttonLink !== "") {
+                            setCardBtn(this.card, this.state.message.buttonTitle, this.state.message.buttonLink);
+                        }
                     }
 
                     let adaptiveCard = new AdaptiveCards.AdaptiveCard();

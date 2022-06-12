@@ -42,6 +42,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                 notificationDataEntity.PollOptions,
                 notificationDataEntity.PollQuizAnswers,
                 translate,
+                notificationDataEntity.InlineTranslation,
                 notificationDataEntity.Ack,
                 acknowledged,
                 notificationDataEntity.IsPollMultipleChoice,
@@ -49,8 +50,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                 selectedChoice,
                 notificationDataEntity.FullWidth,
                 notificationDataEntity.StageView,
-                notificationDataEntity.OnBehalfOf
-                );
+                notificationDataEntity.OnBehalfOf);
         }
 
         /// <summary>
@@ -76,6 +76,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
             string pollOptions,
             string pollQuizAnswers,
             bool translate = false,
+            bool isInlineTranlate = false,
             bool ack = false,
             bool acknowledged = false,
             bool isMutipleChoice = false,
@@ -88,9 +89,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
             var version = new AdaptiveSchemaVersion(1, 3);
             AdaptiveCard card = new AdaptiveCard(version);
 
-            var container = new AdaptiveContainer
+            if (isInlineTranlate)
             {
-                Items = new List<AdaptiveElement>()
+                var container = new AdaptiveContainer
+                {
+                    Items = new List<AdaptiveElement>()
                 {
                     new AdaptiveColumnSet
                     {
@@ -132,24 +135,27 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                         },
                     },
                 },
-                SelectAction = new AdaptiveSubmitAction
+                    SelectAction = new AdaptiveSubmitAction
+                    {
+                        Title = !translate ? Strings.TranslateButton : Strings.ShowOriginalButton,
+                        Id = "translate",
+                        Data = "translate",
+                        DataJson = JsonConvert.SerializeObject(new { notificationId = notificationId, translation = !translate }),
+                    },
+                    Separator = true,
+                };
+                card.Body.Add(container);
+            }
+            else
+            {
+                card.Body.Add(new AdaptiveTextBlock()
                 {
-                    Title = !translate ? Strings.TranslateButton : Strings.ShowOriginalButton,
-                    Id = "translate",
-                    Data = "translate",
-                    DataJson = JsonConvert.SerializeObject(new { notificationId = notificationId, translation = !translate }),
-                },
-                Separator = true,
-            };
-            card.Body.Add(container);
-
-            //card.Body.Add(new AdaptiveTextBlock()
-            //{
-            //    Text = title,
-            //    Size = AdaptiveTextSize.ExtraLarge,
-            //    Weight = AdaptiveTextWeight.Bolder,
-            //    Wrap = true,
-            //});
+                    Text = title,
+                    Size = AdaptiveTextSize.ExtraLarge,
+                    Weight = AdaptiveTextWeight.Bolder,
+                    Wrap = true,
+                });
+            }
 
             if (!string.IsNullOrWhiteSpace(imageUrl))
             {
@@ -370,8 +376,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard
                         new { notificationId = notificationId }),
                 });
             }
-
-            
 
             return card;
         }

@@ -27,6 +27,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob
         /// <returns>Adaptive card in json format.</returns>
         public Task<string> DownloadAdaptiveCardAsync(string blobName);
 
+        public Task UploadBlobAsync(string blobName, string payload, string contentType);
+
+
+        public Task<string> DownloadBlobAsync(string blobName);
+
         /// <summary>
         /// Upload an image to blob container.
         /// </summary>

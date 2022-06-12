@@ -7,6 +7,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
 {
     using System;
     using System.Collections.Generic;
+    using System.Net.Http;
     using System.Threading.Tasks;
     using AdaptiveCards;
     using Microsoft.Azure.WebJobs;
@@ -27,7 +28,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
     using Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using Entity = Common.Services.AdaptiveCard.Entity;
 
     /// <summary>
     /// Azure Function App triggered by messages from a Service Bus queue
@@ -181,6 +181,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
 
                 // Send message.
                 var messageActivity = await this.GetMessageActivity(messageContent);
+
                 var response = await this.messageService.SendMessageAsync(
                     message: messageActivity,
                     serviceUrl: messageContent.GetServiceUrl(),
@@ -200,6 +201,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             {
                 var exceptionMessage = $"{exception.GetType()}: {exception.Message}";
                 log.LogError(exception, $"Failed to send message. ErrorMessage: {exceptionMessage}");
+
+                if (exception is HttpRequestException)
+                {
+                    log.LogError(exception, "Network error in SendActivityAsync");
+                }
 
                 // Update status code depending on delivery count.
                 var statusCode = SentNotificationDataEntity.FaultedAndRetryingStatusCode;
@@ -287,6 +293,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                     Content = JsonConvert.DeserializeObject(adaptiveCard.Card.ToJson()),
                 };
                 var msg = MessageFactory.Attachment(acAttachment);
+                if (message.RecipientData.RecipientType == RecipientDataType.User && notification.NotifyUser)
+                {
+                    msg.TeamsNotifyUser();
+                }
+
                 return msg;
             }
 
@@ -296,13 +307,13 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                 notification.ImageLink = await this.notificationDataRepository.GetImageAsync(notification.ImageLink, notification.ImageBase64BlobName);
             }
 
-            List<Entity> mentions = null;
+            List<Common.Services.AdaptiveCard.Entity> mentions = null;
             if (message.RecipientData.RecipientType == RecipientDataType.User && !string.IsNullOrWhiteSpace(notification.Summary) && notification.Summary.Contains("[user]"))
             {
                 var userDataEntity = await this.userDataRepository.GetAsync(UserDataTableNames.UserDataPartition, message.RecipientData.RecipientId);
                 var atUser = string.Format("<at>{0}</at>", userDataEntity.Name);
                 notification.Summary = notification.Summary.Replace("[user]", atUser);
-                var mentionEntity = new Entity()
+                var mentionEntity = new Common.Services.AdaptiveCard.Entity()
                 {
                     type = "mention",
                     text = atUser,
@@ -312,7 +323,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                         name = userDataEntity.Name,
                     },
                 };
-                mentions = new List<Entity>() { mentionEntity };
+                mentions = new List<Common.Services.AdaptiveCard.Entity>() { mentionEntity };
             }
 
             var card = this.adaptiveCardCreator.CreateAdaptiveCard(notification);
@@ -380,10 +391,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             var messageActivity = MessageFactory.Attachment(adaptiveCardAttachment);
 
             #region Experimental options
-            if (notification.NotifyUser)
-            {
-                messageActivity.TeamsNotifyUser();
-            }
 
             if (!string.IsNullOrWhiteSpace(notification.Author) && notification.OnBehalfOf)
             {
@@ -404,6 +411,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             #endregion
 
             messageActivity.Summary = notification.Title;
+            if (message.RecipientData.RecipientType == RecipientDataType.User && notification.NotifyUser)
+            {
+                messageActivity.TeamsNotifyUser();
+            }
+
             return messageActivity;
         }
     }

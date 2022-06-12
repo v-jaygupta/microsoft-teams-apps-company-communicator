@@ -5,7 +5,7 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { withTranslation, WithTranslation } from "react-i18next";
 import * as AdaptiveCards from "adaptivecards";
-import { Loader, Button, Text, List, Image, Flex} from '@fluentui/react-northstar';
+import { Loader, Button, Text, List, Image, Flex, TextArea} from '@fluentui/react-northstar';
 import * as microsoftTeams from "@microsoft/teams-js";
 
 import './sendConfirmationTaskModule.scss';
@@ -39,6 +39,8 @@ export interface IMessage {
     isPollMultipleChoice: boolean;
     buttonLink?: string;
     buttonTitle?: string;
+    messageType?: string;
+    usersList?: string;
 }
 
 export interface SendConfirmationTaskModuleProps extends RouteComponentProps, WithTranslation {
@@ -98,23 +100,29 @@ class SendConfirmationTaskModule extends React.Component<SendConfirmationTaskMod
                         this.setState({
                             loader: false
                         }, () => {
-                            setCardTitle(this.card, this.state.message.title);
-                            setCardImageLink(this.card, this.state.message.imageLink);
-                            setCardSummary(this.card, this.state.message.summary);
-                            setCardAuthor(this.card, this.state.message.author);
 
-                            if (this.state.message.pollOptions) {
-                                const options: string[] = JSON.parse(this.state.message.pollOptions);
-                                setCardPollOptions(this.card, this.state.message.isPollMultipleChoice, options);
-                                setCardBtn(this.card, this.localize("PollSubmitVote"), "https://adaptivecards.io");
+                            if (this.state.message.messageType === 'CustomAC' && this.state.message.summary) {
+                                this.card = JSON.parse(this.state.message.summary);
                             }
                             else {
-                                setCardHidePoll(this.card);
-                            }
+                                setCardTitle(this.card, this.state.message.title);
+                                setCardImageLink(this.card, this.state.message.imageLink);
+                                setCardSummary(this.card, this.state.message.summary);
+                                setCardAuthor(this.card, this.state.message.author);
 
-                            if (this.state.message.buttonTitle && this.state.message.buttonLink) {
-                                setCardBtn(this.card, this.state.message.buttonTitle, this.state.message.buttonLink);
-                            }
+                                if (this.state.message.pollOptions) {
+                                    const options: string[] = JSON.parse(this.state.message.pollOptions);
+                                    setCardPollOptions(this.card, this.state.message.isPollMultipleChoice, options);
+                                    setCardBtn(this.card, this.localize("PollSubmitVote"), "https://adaptivecards.io");
+                                }
+                                else {
+                                    setCardHidePoll(this.card);
+                                }
+
+                                if (this.state.message.buttonTitle && this.state.message.buttonLink) {
+                                    setCardBtn(this.card, this.state.message.buttonTitle, this.state.message.buttonLink);
+                                }
+                            }                            
 
                             let adaptiveCard = new AdaptiveCards.AdaptiveCard();
                             adaptiveCard.parse(this.card);
@@ -166,7 +174,6 @@ class SendConfirmationTaskModule extends React.Component<SendConfirmationTaskMod
                                 <Flex column className="formContentContainer">
                                     <h3>{this.localize("ConfirmToSend")}</h3>
                                     <span>{this.localize("SendToRecipientsLabel")}</span>
-
                                     <div className="results">
                                         {this.renderAudienceSelection()}
                                     </div>                                    
@@ -213,7 +220,7 @@ class SendConfirmationTaskModule extends React.Component<SendConfirmationTaskMod
         return resultedTeams;
     }
 
-    private renderAudienceSelection = () => {
+    private renderAudienceSelection = () => {        
         if (this.state.teamNames && this.state.teamNames.length > 0) {
             return (
                 <div key="teamNames"> <span className="label">{this.localize("TeamsLabel")}</span>
@@ -238,6 +245,11 @@ class SendConfirmationTaskModule extends React.Component<SendConfirmationTaskMod
                         <Text error content={this.localize("SendToAllUsersNote")} />
                     </div>
                 </div>);
+        } else if (this.state.message.usersList && this.state.message.usersList.length > 0) {
+            return (<TextArea
+                value={this.state.message.usersList}
+                disabled={true}
+                fluid resize="both" variables={{ 'height': '350px' }} />);
         } else {
             return (<div></div>);
         }

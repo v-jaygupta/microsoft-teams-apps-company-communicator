@@ -109,5 +109,18 @@
   "PollParticipationIndicatorSingular": "Ответил {{votes}} из {{succeeded}}",
   "PollParticipationIndicatorPlural": "Ответило людей: {{votes}} из {{succeeded}}",
   "PollQuizResults": "Правильно на этот вопрос ответило: {{percent}}% ({{correct}} из {{votes}}).",
-  "PollQuizNoCorrectAnswers": "На этот вопрос никто не ответил правильно."
+  "PollQuizNoCorrectAnswers": "На этот вопрос никто не ответил правильно.",
+  "NewCustomAdaptiveCardMessage": "Adaptive Card",
+  "EditCustomAdaptiveCardMessage": "Adaptive Card",
+  "SupportedDelimiters": "Поддерживаются следующие разделители: запятая (,), точка запятая (;) и новая строка.",
+  "SendToCSVUsers": "Отправить в чат следующим пользователям (список пользователей)",
+  "AdaptiveCardJSONPayload": "Adaptive Card payload",
+  "AdaptiveCardJSONPayloadDescription": "Для создания и тестирования пожалуйста используйте https://dev.teams.microsoft.com/cards или https://adaptivecards.io/designer/ ",
+  "AllowInlineTranslation": "Добавать кнопку автоматического перевода сообщения",
+  "NotifyUser": "Уведомлять пользователей в чат и ленту. Используйте только для очень важных сообщений",
+  "OnBehalfOf": "Отправить сообщение от лица автора",
+  "FullWidth": "Растягивать сообщение на всю ширину",
+  "hourPlaceholder": "часы",
+  "minutePlaceholder": "минуты",
+  "SendOptions": "Дополнительные настройки"
 }

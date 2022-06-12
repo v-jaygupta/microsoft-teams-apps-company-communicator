@@ -19,7 +19,7 @@
   "NewPoll": "New poll",
   "ViewStatus": "View status",
   "SendConfirmation": "Send confirmation",
-  "SendOptions": "Options",
+  "SendOptions": "Additional settings",
   "PreparingToSend": "Preparing to send...",
   "Queued": "Queued...",
   "SyncingRecipients": "Syncing recipients...",
@@ -118,5 +118,13 @@
   "PollQuizResults": "{{percent}}% of respondents ({{correct}} of {{votes}}) answered this question correctly.",
   "PollQuizNoCorrectAnswers": "No one answered this question correctly.",
   "NewCustomAdaptiveCardMessage": "Adaptive Card",
-  "EditCustomAdaptiveCardMessage": "Adaptive Card"
+  "EditCustomAdaptiveCardMessage": "Adaptive Card",
+  "SupportedDelimiters": "The follow delimiters are supported: comma (,), semicolon (;) and new line.",
+  "SendToCSVUsers": "Send in chat to the following list of users",
+  "AdaptiveCardJSONPayload": "Adaptive Card payload",
+  "AdaptiveCardJSONPayloadDescription": "Please use the designer https://dev.teams.microsoft.com/cards or https://adaptivecards.io/designer/ in order to create and test an Adaptive Card",
+  "AllowInlineTranslation": "Allow inline translation",
+  "NotifyUser": "Notify User twice: chat and activity feed. Use only for important communication.",
+  "OnBehalfOf": "Send message on behalf of an author",
+  "FullWidth": "Full width Adaptive Card"
 }

@@ -18,6 +18,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.DraftNotificationPreview
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.TeamData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.CommonBot;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Draft notification preview service.
@@ -127,7 +128,23 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.DraftNotificationPreview
             ITurnContext turnContext,
             NotificationDataEntity draftNotificationEntity)
         {
-            var reply = this.CreateReply(draftNotificationEntity);
+            IMessageActivity reply = null;
+            if (draftNotificationEntity.MessageType == "CustomAC")
+            {
+                var customCard = draftNotificationEntity.Summary;
+                var adaptiveCard = AdaptiveCard.FromJson(customCard);
+                var acAttachment = new Attachment()
+                {
+                    ContentType = AdaptiveCard.ContentType,
+                    Content = JsonConvert.DeserializeObject(adaptiveCard.Card.ToJson()),
+                };
+                reply = MessageFactory.Attachment(acAttachment);
+            }
+            else
+            {
+                reply = this.CreateReply(draftNotificationEntity);
+            }
+
             await turnContext.SendActivityAsync(reply);
         }
 
@@ -142,7 +159,13 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.DraftNotificationPreview
                 draftNotificationEntity.ButtonLink,
                 draftNotificationEntity.Id,
                 draftNotificationEntity.PollOptions,
-                draftNotificationEntity.PollQuizAnswers);
+                draftNotificationEntity.PollQuizAnswers,
+                draftNotificationEntity.InlineTranslation);
+
+            if (draftNotificationEntity.FullWidth)
+            {
+                adaptiveCard.AdditionalProperties.Add("msteams", new { width = "full" });
+            }
 
             var attachment = new Attachment
             {

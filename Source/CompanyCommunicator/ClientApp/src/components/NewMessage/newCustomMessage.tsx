@@ -40,9 +40,11 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
         this.card = getInitAdaptiveCard(this.localize);
         this.setDefaultCard(this.card);
 
+        const cardPlaceHolder = '{\r\n  \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\r\n  \"type\": \"AdaptiveCard\",\r\n  \"version\": \"1.0\",\r\n  \"body\": [\r\n    {\r\n          \"type\": \"TextBlock\",\r\n          \"text\": \"This is an Adaptive Card\",\r\n          \"weight\": \"bolder\",\r\n          \"size\": \"medium\"\r\n    }\r\n  ]\r\n}\r\n';
+
         this.state = {
             title: "",
-            summary: "",
+            summary: cardPlaceHolder,
             author: "",
             btnLink: "",
             imageLink: "",
@@ -76,6 +78,7 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
 
             errorImageUrlMessage: "",
             errorButtonUrlMessage: "",
+            usersList: "",
             messageType: 'CustomAC',
             templates: ['product announcement', 'conference', 'holidays'],
         }
@@ -235,6 +238,9 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
             else if (draftMessageDetail.allUsers) {
                 selectedRadioButton = "allUsers";
             }
+            else if (draftMessageDetail.usersList && draftMessageDetail.usersList.length > 0) {
+                selectedRadioButton = "csv";
+            }
 
             this.setState({
                 teamsOptionSelected: draftMessageDetail.teams.length > 0,
@@ -271,6 +277,7 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                 btnTitle: draftMessageDetail.buttonTitle,
                 author: draftMessageDetail.author,
                 allUsersOptionSelected: draftMessageDetail.allUsers,
+                usersList: draftMessageDetail.usersList,
                 loader: false
             }, () => {
                 this.updateCard();
@@ -301,23 +308,15 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                             <Flex className="scrollableContent">
                                 <Flex.Item size="size.half">
                                     <Flex column className="formContentContainer">
-
-                                        <Dropdown
-                                            items={this.state.templates}
-                                            placeholder="Select your template"
-                                            checkable
-                                        />
-                                            <Text content={this.localize("AdaptiveCardJSONPayload")} />
+                                        <Text content={this.localize("AdaptiveCardJSONPayload")} />
                                             <TextArea
                                                 autoFocus
-                                                placeholder={this.localize("Summary")}
+                                                placeholder={this.localize("AdaptiveCardJSONPayload")}
                                                 value={this.state.summary}
                                                 onChange={this.onSummaryChanged}
                                                 id="summaryTextArea"
                                             fluid resize="both" variables={{ 'height': '400px' }} />
-                                        <Text content="Please use the designer https://dev.teams.microsoft.com/cards in order to create an Adaptive Card"/>
-
-                                        
+                                        <Text content={this.localize("AdaptiveCardJSONPayloadDescription") }/>                                        
                                         <Text className={(this.state.errorButtonUrlMessage === "") ? "hide" : "show"} error size="small" content={this.state.errorButtonUrlMessage} />
                                     </Flex>
                                 </Flex.Item>
@@ -464,15 +463,15 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                                                             <Flex key={name} column>
                                                                 <Component {...props} />
                                                                 <TextArea
-                                                                    autoFocus
-                                                                    placeholder={this.localize("Summary")}
-                                                                    value={this.state.summary}
-                                                                    onChange={this.onSummaryChanged}
+                                                                    placeholder={this.localize("Users")}
+                                                                    value={this.state.usersList}
+                                                                    onChange={this.onUsersListChanged}
                                                                     id="csvUsers"
-                                                                    fluid resize="both" variables={{ 'height': '400px' }} />
+                                                                    disabled={this.state.selectedRadioBtn !== "csv"}
+                                                                    fluid resize="both" variables={{ 'height': '150px' }} />
                                                                 <div className={this.state.selectedRadioBtn === "csv" ? "" : "hide"}>
                                                                     <div className="noteText">
-                                                                        <Text error content={this.localize("SendToCSVUsersNote")} />
+                                                                        <Text error content={this.localize("SupportedDelimiters")} />
                                                                     </div>
                                                                 </div>
                                                             </Flex>
@@ -510,11 +509,7 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                             <Flex className="scrollableContent">
                                 <Flex.Item size="size.half">
                                     <Flex column className="formContentContainer">
-                                        <h3>{this.localize("SendOptions")}</h3>
-
-                                        <Checkbox label={this.localize("RequestReadReceipt")}
-                                            checked={this.state.teamsOptionSelected ? false : this.state.selectedRequestReadReceipt}
-                                            onChange={this.onRequestReadReceiptChanged} disabled={this.state.teamsOptionSelected} />
+                                        <h3>{this.localize("SendOptions")}</h3>                                        
                                         <Checkbox label={this.localize("DelayDelivery")} checked={this.state.selectedDelayDelivery}
                                             onChange={this.onDelayDeliveryChanged} />
 
@@ -537,12 +532,9 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                                                     dir={LanguageDirection.Ltr} />
                                             </Flex.Item>
                                         </Flex>
-
-                                        <Checkbox label="Inline translation" checked={this.state.selectedInlineTranslation} onChange={this.onInlineTranslationChanged} />
-                                        <Checkbox label="Full Width" checked={this.state.selectedFullWidth} onChange={this.onFullWidthChanged} />
-                                        <Checkbox label="Notify User" checked={this.state.selectedNotifyUser} onChange={this.onNotifyUserChanged} />
-                                        <Checkbox label="On behalf Of" checked={this.state.selectedOnBehalfOf} onChange={this.onBehalfOfChanged} />
-                                        <Checkbox label="Stage view" checked={this.state.selectedStageView} onChange={this.onStageViewChanged} />
+                                        
+                                        <Checkbox label={this.localize("NotifyUser")} checked={this.state.selectedNotifyUser} onChange={this.onNotifyUserChanged} />
+                                        
                                     </Flex>
                                 </Flex.Item>
                                 <Flex.Item size="size.half">
@@ -557,7 +549,7 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
                                         <Loader id="sendingLoader" className="hiddenLoader sendingLoader" size="smallest" label={this.localize("PreparingMessageLabel")} labelPosition="end" />
                                     </Flex.Item>
                                     <Flex.Item push>
-                                        <Button content={this.localize("Back")} onClick={this.onBack} secondary />
+                                        <Button content={this.localize("Back")} disabled={this.isBackBtnDisabled()} onClick={this.onBack} secondary />
                                     </Flex.Item>
                                     <Button content={this.localize("SaveAsDraft")} disabled={this.isSaveBtnDisabled()} id="saveBtn" onClick={this.onSave} primary />
                                 </Flex>
@@ -625,6 +617,14 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
         this.setState({ selectedScheduledDateTime: date });
     }
 
+    private onUsersListChanged = (event: any): void => {
+        let list = event.target.value;
+        list = list.replace(/(?:\\[rn]|[\r\n]+)+/g, ",");
+        this.setState({
+            usersList: list,
+        });
+    }
+
 
     private onGroupSelected = (event: any, data: any) => {
         this.setState({
@@ -643,20 +643,33 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
     }
 
     private isSaveBtnDisabled = () => {
+        const customUsers = (this.state.usersList !== null && this.state.usersList.length > 0);
+        if (customUsers && (this.state.selectedRadioBtn === "csv")) {
+            return false;
+        }
         const teamsSelectionIsValid = (this.state.teamsOptionSelected && (this.state.selectedTeamsNum !== 0)) || (!this.state.teamsOptionSelected);
         const rostersSelectionIsValid = (this.state.rostersOptionSelected && (this.state.selectedRostersNum !== 0)) || (!this.state.rostersOptionSelected);
-        const groupsSelectionIsValid = (this.state.groupsOptionSelected && (this.state.selectedGroupsNum !== 0)) || (!this.state.groupsOptionSelected);
+        const groupsSelectionIsValid = (this.state.groupsOptionSelected && (this.state.selectedGroupsNum !== 0)) || (!this.state.groupsOptionSelected);        
         const nothingSelected = (!this.state.teamsOptionSelected) && (!this.state.rostersOptionSelected) && (!this.state.groupsOptionSelected) && (!this.state.allUsersOptionSelected);
         return (!teamsSelectionIsValid || !rostersSelectionIsValid || !groupsSelectionIsValid || nothingSelected)
     }
 
     private isNextBtnDisabled = () => {
-        const title = this.state.title;
-        return !(title);
+        const current = this.state.page;
+        if (current === "AudienceSelection") {
+            return this.isSaveBtnDisabled();
+        }
+        else {
+            const title = this.state.title;
+            return !(title);
+        }
     }
 
     private isBackBtnDisabled = () => {
-        return false;
+        const current = this.state.page;
+        if (current === "AudienceSelection") {
+            return this.isSaveBtnDisabled();
+        }
     }
 
     private getItems = () => {
@@ -807,8 +820,8 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
             inlineTranslation: this.state.selectedInlineTranslation,
             onBehalfOf: this.state.selectedOnBehalfOf,
             stageView: this.state.selectedStageView,
-
             messageType: this.state.messageType,
+            usersList: this.state.selectedRadioBtn === "csv" ? this.state.usersList : "",
         };
 
         if (this.state.exists) {
@@ -857,7 +870,7 @@ class NewCustomMessage extends React.Component<INewMessageProps, formState> {
 
     private onBack = (event: any) => {
         const current = this.state.page;
-        let back: string = (current === "AudienceSelection") ? "CardCreation" : "AdditionalOptions";
+        let back: string = (current === "AdditionalOptions") ? "AudienceSelection" : "CardCreation";
 
         this.setState({
             page: back

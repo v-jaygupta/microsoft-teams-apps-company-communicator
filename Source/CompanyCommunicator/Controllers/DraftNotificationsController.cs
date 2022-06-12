@@ -48,7 +48,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
         /// <param name="draftNotificationPreviewService">Draft notification preview service.</param>
         /// <param name="appSettingsService">App Settings service.</param>
         /// <param name="localizer">Localization service.</param>
-        /// <param name="groupsService">group service.</param>
+        /// <param name="groupsService">Group service.</param>
+        /// <param name="blobStorageProvider">Blob storage provider.</param>
         public DraftNotificationsController(
             INotificationDataRepository notificationDataRepository,
             ITeamDataRepository teamDataRepository,
@@ -193,6 +194,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
                 notificationEntity.Summary = notification.Id;
             }
 
+            if (!string.IsNullOrWhiteSpace(notification.UsersList))
+            {
+                await this.notificationDataRepository.SaveCSVUsersAsync(notification.Id, notification.UsersList);
+                notificationEntity.UsersFile = notification.Id;
+            }
+
             await this.notificationDataRepository.CreateOrUpdateAsync(notificationEntity);
             return this.Ok();
         }
@@ -226,6 +233,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             if (notificationEntity.MessageType == "CustomAC")
             {
                 await this.blobStorageProvider.DeleteAdaptiveCardBlobAsync(notificationEntity.Summary);
+            }
+
+            if (!string.IsNullOrWhiteSpace(notificationEntity.UsersFile))
+            {
+                await this.blobStorageProvider.DeleteImageBlobAsync(notificationEntity.UsersFile + ".csv");
             }
 
             await this.notificationDataRepository.DeleteAsync(notificationEntity);
@@ -322,6 +334,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
                 result.Summary = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
             }
 
+            if (!string.IsNullOrWhiteSpace(notificationEntity.UsersFile))
+            {
+                result.UsersList = await this.notificationDataRepository.GetCSVUsersAsync(notificationEntity.UsersFile);
+            }
+
             return this.Ok(result);
         }
 
@@ -402,6 +419,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             if (!string.IsNullOrEmpty(notificationEntity.ImageBase64BlobName))
             {
                 notificationEntity.ImageLink = await this.notificationDataRepository.GetImageAsync(notificationEntity.ImageLink, notificationEntity.ImageBase64BlobName);
+            }
+
+            if (notificationEntity.MessageType == "CustomAC")
+            {
+                notificationEntity.Summary = await this.notificationDataRepository.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
             }
 
             var result = await this.draftNotificationPreviewService.SendPreview(

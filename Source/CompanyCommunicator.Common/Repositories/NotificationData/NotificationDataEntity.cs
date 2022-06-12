@@ -254,5 +254,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         public bool OnBehalfOf { get; set; }
 
         public bool StageView { get; set; }
+
+        public string UsersFile { get; set; }
     }
 }

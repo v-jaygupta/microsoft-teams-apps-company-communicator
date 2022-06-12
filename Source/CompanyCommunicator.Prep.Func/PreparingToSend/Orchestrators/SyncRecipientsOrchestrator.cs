@@ -69,6 +69,14 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Prep.Func.PreparingToSend
                     notification);
             }
 
+            if (!string.IsNullOrWhiteSpace(notification.UsersFile))
+            {
+                return await context.CallActivityWithRetryAsync<RecipientsInfo>(
+                    FunctionNames.SyncCustomUserListActivity,
+                    FunctionSettings.DefaultRetryOptions,
+                    notification);
+            }
+
             // Invalid audience.
             var errorMessage = $"Invalid audience select for notification id: {notification.Id}";
             log.LogError(errorMessage);

@@ -100,5 +100,10 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         public Task SaveCustomAdaptiveCardAsync(string blobName, string acPayload);
 
         public Task<string> GetCustomAdaptiveCardAsync(string blobName);
+
+
+        public Task SaveCSVUsersAsync(string blobName, string scv);
+
+        public Task<string> GetCSVUsersAsync(string blobName);
     }
 }

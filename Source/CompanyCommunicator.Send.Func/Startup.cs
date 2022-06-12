@@ -15,23 +15,23 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
     using Microsoft.Bot.Connector.Authentication;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Adapter;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Clients;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Extensions;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.NotificationData;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.SentNotificationData;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.UserData;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Secrets;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.AdaptiveCard;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.CommonBot;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MessageQueues;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MessageQueues.DataQueue;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MessageQueues.PrepareToSendQueue;
-    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Adapter;
-    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Extensions;
-    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Secrets;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.MessageQueues.SendQueue;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Teams;
     using Microsoft.Teams.Apps.CompanyCommunicator.Send.Func.Services;
-    using Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.UserData;
 
     /// <summary>
     /// Register services in DI container of the Azure functions system.
@@ -81,18 +81,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                     repositoryOptions.EnsureTableExists =
                         !configuration.GetValue<bool>("IsItExpectedThatTableAlreadyExists", true);
                 });
-            //builder.Services.AddOptions<MessageQueueOptions>()
-            //    .Configure<IConfiguration>((messageQueueOptions, configuration) =>
-            //    {
-            //        messageQueueOptions.ServiceBusConnection =
-            //            configuration.GetValue<string>("ServiceBusConnection");
-            //    });
-            //builder.Services.AddOptions<DataQueueMessageOptions>()
-            //    .Configure<IConfiguration>((dataQueueMessageOptions, configuration) =>
-            //    {
-            //        dataQueueMessageOptions.ForceCompleteMessageDelayInSeconds =
-            //            configuration.GetValue<double>("ForceCompleteMessageDelayInSeconds", 86400);
-            //    });
 
             builder.Services.AddLocalization();
 
@@ -133,6 +121,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
 
             builder.Services.AddTransient<IStorageClientFactory, StorageClientFactory>();
             builder.Services.AddTransient<IBlobStorageProvider, BlobStorageProvider>();
+
             // Add Secrets.
             var keyVaultUrl = Environment.GetEnvironmentVariable("KeyVault:Url");
             builder.Services.AddSecretsProvider(keyVaultUrl);

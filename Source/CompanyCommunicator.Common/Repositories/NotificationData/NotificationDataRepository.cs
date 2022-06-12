@@ -117,6 +117,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     IsPollQuizMode = draftNotificationEntity.IsPollQuizMode,
                     PollQuizAnswers = draftNotificationEntity.PollQuizAnswers,
                     IsPollMultipleChoice = draftNotificationEntity.IsPollMultipleChoice,
+
+                    UsersFile = draftNotificationEntity.UsersFile,
                 };
 
                 await this.CreateOrUpdateAsync(sentNotificationEntity);
@@ -172,6 +174,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     IsPollQuizMode = notificationEntity.IsPollQuizMode,
                     PollQuizAnswers = notificationEntity.PollQuizAnswers,
                     IsPollMultipleChoice = notificationEntity.IsPollMultipleChoice,
+
+                    ScheduledDateTime = notificationEntity.ScheduledDateTime,
                 };
 
                 if (!string.IsNullOrEmpty(notificationEntity.ImageBase64BlobName))
@@ -184,6 +188,14 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                 {
                     string acPayload = await this.GetCustomAdaptiveCardAsync(notificationEntity.Summary);
                     await this.SaveCustomAdaptiveCardAsync(newId, acPayload);
+                    newNotificationEntity.Summary = newId;
+                }
+
+                if (!string.IsNullOrWhiteSpace(notificationEntity.UsersFile))
+                {
+                    string payload = await this.GetCSVUsersAsync(notificationEntity.UsersFile);
+                    await this.SaveCSVUsersAsync(newId, payload);
+                    newNotificationEntity.UsersFile = newId;
                 }
 
                 await this.CreateOrUpdateAsync(newNotificationEntity);
@@ -283,6 +295,18 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         public async Task SaveCustomAdaptiveCardAsync(string blobName, string acPayload)
         {
             await this.storageProvider.UploadAdaptiveCardAsync(blobName, acPayload);
+        }
+
+        /// <inheritdoc/>
+        public async Task SaveCSVUsersAsync(string blobName, string csv)
+        {
+            await this.storageProvider.UploadBlobAsync(blobName + ".csv", csv, "text/csv");
+        }
+
+        /// <inheritdoc/>
+        public async Task<string> GetCSVUsersAsync(string blobName)
+        {
+            return await this.storageProvider.DownloadBlobAsync(blobName + ".csv");
         }
 
         /// <inheritdoc/>

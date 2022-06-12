@@ -77,6 +77,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Repositories.Extensions
                 notificationEntity.Summary = newId;
             }
 
+            if (notification.UsersList != null && notification.UsersList.Length > 0)
+            {
+                await notificationRepository.SaveCSVUsersAsync(newId, notification.UsersList);
+                notificationEntity.UsersFile = newId;
+            }
+
             await notificationRepository.CreateOrUpdateAsync(notificationEntity);
 
             return newId;

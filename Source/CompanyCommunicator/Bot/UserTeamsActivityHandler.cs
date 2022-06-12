@@ -36,7 +36,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
 
         private readonly TeamsDataCapture teamsDataCapture;
         private readonly IBotTelemetryClient botTelemetryClient;
-        //private readonly ISendingNotificationDataRepository sendingNotificationRepo;
         private readonly ISentNotificationDataRepository sentNotificationDataRepository;
         private readonly INotificationDataRepository notificationDataRepository;
         private readonly AdaptiveCardCreator adaptiveCardCreator;
@@ -206,7 +205,10 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                             notificationEntity.ImageLink = await this.notificationDataRepository.GetImageAsync(notificationEntity.ImageLink, notificationEntity.ImageBase64BlobName);
                         }
 
-                        var card = this.adaptiveCardCreator.CreateAdaptiveCard(notificationEntity, translate: translation != null && translation.Value, acknowledged: translation == null);
+                        var card = this.adaptiveCardCreator.CreateAdaptiveCard(
+                            notificationEntity,
+                            translate: translation != null && translation.Value,
+                            acknowledged: translation == null);
 
                         var adaptiveCardAttachment = new Attachment()
                         {
@@ -273,27 +275,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                         Height = 530,
                         Width = 1000,
                         Url = url,
-                        //CompletionBotId = "be9fe432-ebe6-4da9-a657-2a6ab261768e",
                     },
-                },
-            };
-        }
-
-        protected override async Task<TaskModuleResponse> OnTeamsTaskModuleSubmitAsync(ITurnContext<IInvokeActivity> turnContext,
-            TaskModuleRequest taskModuleRequest, CancellationToken cancellationToken)
-        {
-            var activity = turnContext.Activity;
-            var properties = new Dictionary<string, string>
-                {
-                    { "taskModuleRequest", JsonConvert.SerializeObject(taskModuleRequest) },
-                };
-            this.LogActivityTelemetry(activity, "OnTeamsTaskModuleSubmitAsync", properties);
-
-            return new TaskModuleResponse
-            {
-                Task = new TaskModuleMessageResponse()
-                {
-                    Value = "Thanks!",
                 },
             };
         }

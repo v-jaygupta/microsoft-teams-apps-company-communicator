@@ -78,7 +78,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Models
 
         public string MessageType { get; set; }
 
-        public string ACPayload { get; set; }
+        public string UsersList { get; set; }
 
         public string PollQuizAnswers { get; set; }
 
