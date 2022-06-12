@@ -37,6 +37,17 @@
     "messageTeamMembers"
   ],
   "validDomains": [
+    "*.youtube.com",
+	  "*.sharepoint.com",
+    "*.sharepoint-df.com",
+    "*.login.microsoftonline.com",
+    "spoppe-a.akamaihd.net",
+    "spoprod-a.akamaihd.net",
+    "msft.spoppe.com",
     "<<appDomain>>"
-  ]
+  ],
+  "webApplicationInfo": {
+      "id": "00000003-0000-0ff1-ce00-000000000000",
+      "resource": "https://<<yoursharepointdomain>>.sharepoint.com"
+   }
 }
