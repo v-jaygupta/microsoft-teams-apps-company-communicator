@@ -202,11 +202,6 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
                 var exceptionMessage = $"{exception.GetType()}: {exception.Message}";
                 log.LogError(exception, $"Failed to send message. ErrorMessage: {exceptionMessage}");
 
-                if (exception is HttpRequestException)
-                {
-                    log.LogError(exception, "Network error in SendActivityAsync");
-                }
-
                 // Update status code depending on delivery count.
                 var statusCode = SentNotificationDataEntity.FaultedAndRetryingStatusCode;
                 if (deliveryCount >= SendFunction.MaxDeliveryCountForDeadLetter)
