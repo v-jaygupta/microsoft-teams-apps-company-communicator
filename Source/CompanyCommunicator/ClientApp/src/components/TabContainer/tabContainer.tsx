@@ -214,10 +214,11 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                     {!this.state.isDeleteHistoryClicked
                         ? <>
                             <Flex className="newPostBtn" hAlign="end" vAlign="end">
-                                 {this.state.hasUserDeletePermission ?
+                                  {/* {this.state.hasUserDeletePermission ?
                                     <Button content={this.localize("DeleteMessages")} onClick={this.onDeleteMessages} secondary />
                                     : ''
-                                }
+                                } */}
+                                <Button content={this.localize("DeleteMessages")} onClick={this.onDeleteMessages} secondary />
                                 <Button content={this.localize("NewMessage")} onClick={this.onNewMessage} primary />
                             </Flex>
                             <Flex className="messageContainer">
