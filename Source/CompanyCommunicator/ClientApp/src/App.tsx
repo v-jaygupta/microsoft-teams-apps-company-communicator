@@ -16,6 +16,7 @@ import ErrorPage from "./components/ErrorPage/errorPage";
 import SignInPage from "./components/SignInPage/signInPage";
 import SignInSimpleStart from "./components/SignInPage/signInSimpleStart";
 import SignInSimpleEnd from "./components/SignInPage/signInSimpleEnd";
+import DeleteMessagesTaskModule from './components/DeleteMessagesTaskModule/deleteMessagesTaskModule'
 import { updateLocale } from './i18n';
 import i18n from 'i18next';
 
@@ -125,6 +126,7 @@ class App extends React.Component<{}, IAppState> {
                                 <Route exact path="/signin" component={SignInPage} />
                                 <Route exact path="/signin-simple-start" component={SignInSimpleStart} />
                                 <Route exact path="/signin-simple-end" component={SignInSimpleEnd} />
+                                <Route exact path="/deletemessagestaskmodule/:selectedTimeRange/:selectedTimeRangeName" component={DeleteMessagesTaskModule} />
                             </Switch>
                         </BrowserRouter>
                     </div>

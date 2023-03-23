@@ -41,6 +41,18 @@ export const getSentNotification = async (id: number): Promise<any> => {
     return await axios.get(url);
 }
 
+// Get deleted messages details
+export const getDeleteMessagesData = async (): Promise<any> => {
+    let url = baseAxiosUrl + "/deletemessages";
+    return await axios.get(url);
+}
+
+// Prepare API call to delete seleted range data 
+export const deleteHistoricalData = async (payload: {}): Promise<any> => {
+    let url = baseAxiosUrl + "/deletemessages";
+    return await axios.post(url, payload);
+}
+
 export const getDraftNotification = async (id: number): Promise<any> => {
     let url = baseAxiosUrl + "/draftnotifications/" + id;
     return await axios.get(url);
@@ -61,6 +73,11 @@ export const sendDraftNotification = async (payload: {}): Promise<any> => {
     let url = baseAxiosUrl + "/sentnotifications";
     return await axios.post(url, payload);
 }
+
+//export const sendDeleteNotification = async (payload: {}): Promise<any> => {
+//    let url = baseAxiosUrl + "/deletenotifications";
+//    return await axios.post(url, payload);
+//}
 
 export const updateDraftNotification = async (payload: {}): Promise<any> => {
     let url = baseAxiosUrl + "/draftnotifications";

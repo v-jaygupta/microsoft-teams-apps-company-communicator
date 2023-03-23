@@ -5,6 +5,8 @@ import * as React from 'react';
 import { withTranslation, WithTranslation } from "react-i18next";
 import Messages from '../Messages/messages';
 import DraftMessages from '../DraftMessages/draftMessages';
+import DeleteMessagesHistory from '../DeleteMessagesHistory/deleteMessagesHistory';
+import DeleteMessages from '../DeleteMessages/deleteMessages';
 import './tabContainer.scss';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { getBaseUrl } from '../../configVariables';
@@ -12,6 +14,8 @@ import { Accordion, Button, Flex, FlexItem, Tooltip } from '@fluentui/react-nort
 import { getDraftMessagesList } from '../../actions';
 import { connect } from 'react-redux';
 import { TFunction } from "i18next";
+import { NavLink } from 'react-router-dom';
+import { getDeleteMessagesData } from '../../apis/messageListApi';
 
 interface ITaskInfo {
     title?: string;
@@ -25,25 +29,71 @@ interface ITaskInfo {
 
 export interface ITaskInfoProps extends WithTranslation {
     getDraftMessagesList?: any;
+    backNavigation: any;
+    deleteMessage: any;
+    deleteMessagesProps: any;
 }
 
 export interface ITabContainerState {
-    url: string;
+    url: string,
+    isDeleteHistoryClicked: boolean,
+    currentLoggedInUser: any,
+    hasUserDeletePermission: boolean,
+    deleteMessage: any
 }
 
 class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
+
     readonly localize: TFunction;
     constructor(props: ITaskInfoProps) {
         super(props);
         this.localize = this.props.t;
+
         this.state = {
-            url: getBaseUrl() + "/newmessage?locale={locale}"
+            url: getBaseUrl() + "/newmessage?locale={locale}",
+            isDeleteHistoryClicked: false,
+            currentLoggedInUser: {},
+            hasUserDeletePermission: false,
+            deleteMessage: ''
         }
         this.escFunction = this.escFunction.bind(this);
     }
 
+    // Check if the user has delete messages permission
+    loggedInUserAuthentication = (currentLoggedInUser: any) => {
+
+        // Get user mail id using environment variable
+        let authorizedUsers = process.env.REACT_APP_AUTHORIZED_USERS_EMAIL;
+        const deteleMessagePermission = authorizedUsers && authorizedUsers.toLowerCase().includes(currentLoggedInUser);
+
+        this.setState({
+            hasUserDeletePermission: deteleMessagePermission ? deteleMessagePermission : this.state.hasUserDeletePermission
+        })
+    }
+
+    public deleteHistoricalMessages = async () => {
+        try {
+            debugger;
+            const respone = await getDeleteMessagesData();
+            this.setState({
+                deleteMessage: respone
+            });
+        }
+        catch (error) {
+            return error;
+        }
+    }
+
     public componentDidMount() {
         microsoftTeams.initialize();
+
+        //Get Current Logged in user detail
+        microsoftTeams.getContext((context) => {
+            const currentLoggedInUser = context.userPrincipalName ? context.userPrincipalName.toLowerCase() : "";
+            this.loggedInUserAuthentication(currentLoggedInUser);
+        });
+
+        this.deleteHistoricalMessages();
         //- Handle the Esc key
         document.addEventListener("keydown", this.escFunction, false);
     }
@@ -56,6 +106,11 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
         if (event.keyCode === 27 || (event.key === "Escape")) {
             microsoftTeams.tasks.submitTask();
         }
+    }
+
+    // Get back button click details from deleteMessages page
+    public handleCallback = (isBackButtonClicked: any) => {
+        this.setState({ isDeleteHistoryClicked: isBackButtonClicked })
     }
 
     public render(): JSX.Element {
@@ -79,12 +134,32 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                 },
             }
         ]
-         const buttonId = 'callout-button';
-         const customHeaderImagePath = process.env.REACT_APP_HEADERIMAGE;
-         const customHeaderText = process.env.REACT_APP_HEADERTEXT == null ? 
-                                    this.localize("CompanyCommunicator") 
-                                        : this.localize(process.env.REACT_APP_HEADERTEXT);
-       
+        // Define a new panel to delete selected time range messages
+        const deletePanels = [
+            {
+                title: '',
+                content: {
+                    key: 'deleteMessages',
+                    content: (
+                        <DeleteMessages backNavigation={this.handleCallback}></DeleteMessages>
+                    ),
+                },
+            },
+            {
+                title: this.localize('DeleteMessagesHistorySectionTitle'),
+                content: {
+                    key: 'deleteMessagesHistory',
+                    content: (
+                        <DeleteMessagesHistory deleteMessagesProps={this.state.deleteMessage}></DeleteMessagesHistory>
+                    ),
+                },
+            }
+        ]
+        const buttonId = 'callout-button';
+        const customHeaderImagePath = process.env.REACT_APP_HEADERIMAGE;
+        const customHeaderText = process.env.REACT_APP_HEADERTEXT == null ?
+            this.localize("CompanyCommunicator")
+            : this.localize(process.env.REACT_APP_HEADERTEXT);
 
         return (
             <>
@@ -92,9 +167,9 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                     <Flex gap="gap.small" space='between'>
                         <Flex gap="gap.small" vAlign="center">
                             <img
-                                src={ customHeaderImagePath == null ? 
-                                            require("../../assets/Images/mslogo.png").default 
-                                            : customHeaderImagePath}
+                                src={customHeaderImagePath == null ?
+                                    require("../../assets/Images/mslogo.png").default
+                                    : customHeaderImagePath}
                                 alt="Ms Logo"
                                 className="ms-logo"
                                 title={customHeaderText}
@@ -135,14 +210,34 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
                     </Flex>
                 </div>
                 <Flex className="tabContainer" column fill gap="gap.small">
-                    <Flex className="newPostBtn" hAlign="end" vAlign="end">
-                        <Button content={this.localize("NewMessage")} onClick={this.onNewMessage} primary />
-                    </Flex>
-                    <Flex className="messageContainer">
-                        <Flex.Item grow={1} >
-                            <Accordion defaultActiveIndex={[0, 1]} panels={panels} />
-                        </Flex.Item>
-                    </Flex>
+
+                    {!this.state.isDeleteHistoryClicked
+                        ? <>
+                            <Flex className="newPostBtn" hAlign="end" vAlign="end">
+                                 {this.state.hasUserDeletePermission ?
+                                    <Button content={this.localize("DeleteMessages")} onClick={this.onDeleteMessages} secondary />
+                                    : ''
+                                }
+                                <Button content={this.localize("NewMessage")} onClick={this.onNewMessage} primary />
+                            </Flex>
+                            <Flex className="messageContainer">
+                                <Flex.Item grow={1} >
+                                    <Accordion defaultActiveIndex={[0, 1]} panels={panels} />
+                                </Flex.Item>
+                            </Flex>
+                        </>
+                        : <Flex className="messageContainer">
+                            <div className="topNavigation">
+                                <nav className="navbar is-primary" role="navigation" aria-label="main navigation">{this.localize("Dashboard")}
+                                    <NavLink to='deletemessages'>{this.localize("DeleteMessagesSectionTitle")}</NavLink>
+                                </nav>
+                            </div>
+
+                            <Flex.Item grow={1} >
+                                <Accordion defaultActiveIndex={[0, 1]} panels={deletePanels} />
+                            </Flex.Item>
+                        </Flex>
+                    }
                 </Flex>
             </>
         );
@@ -162,6 +257,13 @@ class TabContainer extends React.Component<ITaskInfoProps, ITabContainerState> {
         };
 
         microsoftTeams.tasks.startTask(taskInfo, submitHandler);
+    }
+
+    onDeleteMessages = () => {
+
+        this.setState({
+            isDeleteHistoryClicked: true
+        });
     }
 }
 

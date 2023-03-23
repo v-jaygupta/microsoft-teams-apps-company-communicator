@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import { formatDate } from '../i18n';
-import { getSentNotifications, getDraftNotifications } from '../apis/messageListApi';
+import { getSentNotifications, getDraftNotifications, deleteHistoricalData, getDeleteMessagesData } from '../apis/messageListApi';
 
 type Notification = {
     createdDateTime: string,
@@ -17,6 +17,14 @@ type Notification = {
     title: string,
     totalMessageCount: number,
     createdBy: string,
+}
+
+type cleanUpHistory = {
+    timestamp:string,
+    status: string,
+    selectedDateRange: string,
+    recordsDeleted: number,
+    deletedBy: string
 }
 
 export const selectMessage = (message: any) => {
@@ -39,4 +47,11 @@ export const getMessagesList = () => async (dispatch: any) => {
 export const getDraftMessagesList = () => async (dispatch: any) => {
     const response = await getDraftNotifications();
     dispatch({ type: 'FETCH_DRAFTMESSAGES', payload: response.data });
+};
+
+// Get deleted messages list
+export const getDeleteMessagesList = () => async (dispatch: any) => {
+    const response = await getDeleteMessagesData();
+    const cleanUpHistoryList: cleanUpHistory[] = response.data;
+    dispatch({ type: 'FETCH_DELETEMESSAGES', payload: cleanUpHistoryList });
 };
