@@ -1,4 +1,4 @@
-﻿// <copyright file="CompanyCommunicatorDataCleanUpFunction.cs" company="Microsoft">
+// <copyright file="CompanyCommunicatorDataCleanUpFunction.cs" company="Microsoft">
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 // </copyright>
@@ -179,11 +179,20 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func
             TimeSpan endDate = DateTimeOffset.UtcNow.Date - purgeEndDate;
             var purgeRecordsOlderThanDaysStartDate = startDate.Days;
             var purgeRecordsOlderThanDaysEndDate = endDate.Days;
+            var query = new TableQuery();
 
             log.LogInformation($"Starting PurgeEntitiesAsync");
             log.LogInformation($"Table={table.Name}, PurgeRecordsStartDate={purgeRecordsOlderThanDaysStartDate} PurgeRecordsEndDate={purgeRecordsOlderThanDaysEndDate}");
 
-            var query = this.partitionKeyHandler.GetTableQuery(purgeRecordsOlderThanDaysStartDate, purgeRecordsOlderThanDaysEndDate);
+            if (table.Name == "NotificationData")
+            {
+                query = this.partitionKeyHandler.GetNotificationDataTableQuery(purgeRecordsOlderThanDaysStartDate, purgeRecordsOlderThanDaysEndDate);
+            }
+            else
+            {
+                query = this.partitionKeyHandler.GetTableQuery(purgeRecordsOlderThanDaysStartDate, purgeRecordsOlderThanDaysEndDate);
+            }
+
             var continuationToken = new TableContinuationToken();
             int numPagesProcessed = 0;
             int numEntitiesDeleted = 0;
