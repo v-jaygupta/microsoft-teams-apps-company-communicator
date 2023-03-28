@@ -1,4 +1,4 @@
-﻿// <copyright file="PartitionKeyHandlerService.cs" company="Microsoft">
+// <copyright file="PartitionKeyHandlerService.cs" company="Microsoft">
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 // </copyright>
@@ -46,6 +46,35 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func.Services.DataCleanU
 
             var completeFilter = TableQuery.CombineFilters(toDateFilter, TableOperators.And, fromDateFilter);
 
+
+            var query = new TableQuery()
+                .Where(completeFilter)
+                .Select(new[] { "PartitionKey", "RowKey" });
+            return query;
+        }
+
+        /// <summary>
+        /// Used to create the table query based on start, end date and partition key for records deletion.
+        /// </summary>
+        /// <param name="purgeRecordsOlderThanDaysStartDate">Start Date for records deletion.</param>
+        /// <param name="purgeRecordsOlderThanDaysEndDate">End date for records deletion.</param>
+        /// <returns>Table Query based on the start and end date.</returns>
+        public TableQuery GetNotificationDataTableQuery(int purgeRecordsOlderThanDaysStartDate, int purgeRecordsOlderThanDaysEndDate)
+        {
+            var fromDateFilter = TableQuery.GenerateFilterConditionForDate(
+               nameof(TableEntity.Timestamp),
+               QueryComparisons.GreaterThanOrEqual,
+               DateTimeOffset.UtcNow.Date.AddDays(-purgeRecordsOlderThanDaysStartDate));
+            var toDateFilter = TableQuery.GenerateFilterConditionForDate(
+               nameof(TableEntity.Timestamp),
+               QueryComparisons.LessThanOrEqual,
+               DateTimeOffset.UtcNow.Date.AddDays(-purgeRecordsOlderThanDaysEndDate));
+            var partitionKeyFilter = TableQuery.GenerateFilterCondition(
+               nameof(TableEntity.PartitionKey),
+               QueryComparisons.NotEqual,
+               "DraftNotifications");
+
+            var completeFilter = TableQuery.CombineFilters(TableQuery.CombineFilters(toDateFilter, TableOperators.And, fromDateFilter), TableOperators.And, partitionKeyFilter);
 
             var query = new TableQuery()
                 .Where(completeFilter)
