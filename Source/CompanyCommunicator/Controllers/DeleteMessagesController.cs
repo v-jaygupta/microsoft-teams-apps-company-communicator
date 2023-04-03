@@ -9,6 +9,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
     using System.Collections.Generic;
     using System.Net.Http;
     using System.Net.Http.Json;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
@@ -74,6 +75,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
 
             var newId = this.tableRowKeyGenerator.CreateNewKeyOrderingMostRecentToOldest();
             deleteHistoricalMessage.RowKeyId = newId;
+            Thread.Sleep(226000);
 
             await this.cleanUpHistoryRepository.CreateOrUpdateAsync(new CleanUpHistoryEntity()
             {
