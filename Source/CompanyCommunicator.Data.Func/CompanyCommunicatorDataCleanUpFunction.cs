@@ -173,15 +173,16 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func
         {
             var sw = new Stopwatch();
             sw.Start();
+            
 
             log.LogInformation($"Starting PurgeEntitiesAsync");
+            await Task.Delay(TimeSpan.FromSeconds(228));
             TimeSpan startDate = DateTimeOffset.UtcNow.Date - purgeStartDate;
             TimeSpan endDate = DateTimeOffset.UtcNow.Date - purgeEndDate;
             var purgeRecordsOlderThanDaysStartDate = startDate.Days;
             var purgeRecordsOlderThanDaysEndDate = endDate.Days;
             var query = new TableQuery();
 
-            log.LogInformation($"Starting PurgeEntitiesAsync");
             log.LogInformation($"Table={table.Name}, PurgeRecordsStartDate={purgeRecordsOlderThanDaysStartDate} PurgeRecordsEndDate={purgeRecordsOlderThanDaysEndDate}");
 
             if (table.Name == "NotificationData")
