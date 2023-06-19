@@ -8,6 +8,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Microsoft.Azure.Cosmos.Table;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.Teams.Apps.CompanyCommunicator.Common.Services.Blob;
@@ -48,7 +49,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         /// <inheritdoc/>
         public async Task<IEnumerable<NotificationDataEntity>> GetAllDraftNotificationsAsync()
         {
-            var result = await this.GetAllAsync(NotificationDataTableNames.DraftNotificationsPartition);
+            string scheduledMessageFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, false);
+            var result = await this.GetWithFilterAsync(scheduledMessageFilter, NotificationDataTableNames.DraftNotificationsPartition);
 
             return result;
         }
@@ -101,6 +103,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
                     TotalMessageCount = draftNotificationEntity.TotalMessageCount,
                     SendingStartedDate = DateTime.UtcNow,
                     Status = NotificationStatus.Queued.ToString(),
+                    IsScheduled = draftNotificationEntity.IsScheduled,
+                    ScheduledDate = draftNotificationEntity.ScheduledDate,
                 };
                 await this.CreateOrUpdateAsync(sentNotificationEntity);
 
@@ -242,6 +246,28 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         public async Task<string> GetImageAsync(string prefix, string blobName)
         {
             return prefix + await this.storageProvider.DownloadBase64ImageAsync(blobName);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<NotificationDataEntity>> GetAllScheduledNotificationsAsync()
+        {
+            string isScheduledFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, true);
+            var result = await this.GetWithFilterAsync(isScheduledFilter, NotificationDataTableNames.DraftNotificationsPartition);
+
+            return result;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<NotificationDataEntity>> GetAllPendingScheduledNotificationsAsync()
+        {
+            DateTime dateTimeNow = DateTime.UtcNow;
+            string isScheduledFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, true);
+            string scheduleDateFilter = TableQuery.GenerateFilterConditionForDate("ScheduledDate", QueryComparisons.LessThanOrEqual, dateTimeNow);
+            string combineFilter = TableQuery.CombineFilters(isScheduledFilter, TableOperators.And, scheduleDateFilter);
+
+            var result = await this.GetWithFilterAsync(combineFilter, NotificationDataTableNames.DraftNotificationsPartition);
+
+            return result;
         }
 
         private string AppendNewLine(string originalString, string newString)

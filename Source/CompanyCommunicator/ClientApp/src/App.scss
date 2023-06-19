@@ -2,7 +2,7 @@
     .adaptive-task-grid {
         display: grid;
         min-height: 500px;
-        padding: 2rem 2rem 8rem 2rem;
+        padding: 2rem 2rem 2rem 2rem;
         grid-template-columns: 50% 50%;
         grid-template-areas:
             'form-area card-area'
@@ -27,7 +27,7 @@
     .adaptive-task-grid {
         display: grid;
         min-height: 500px;
-        padding: 2rem 2rem 8rem 2rem;
+        // padding: 2rem 2rem 2rem 2rem;
         grid-template-rows: auto 1fr;
         grid-template-columns: 1fr;
         grid-template-areas:
@@ -55,11 +55,7 @@
     border-top-color: var(--colorBrandForegroundInvertedPressed);
 }
 
-.wizard-page {
-    padding: 2rem 2rem 8rem 2rem;
-}
-
-.delete-confirmation-task {
+.dialog-padding {
     padding: 2rem 2rem 8rem 2rem;
 }
 
@@ -121,10 +117,13 @@
     outline-offset: -2px;
 }
 
-.sent-messages {
-    .fui-Persona__primaryText {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        width: 100%;
-    }
+.fui-Persona__primaryText {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.delete-messages {
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
