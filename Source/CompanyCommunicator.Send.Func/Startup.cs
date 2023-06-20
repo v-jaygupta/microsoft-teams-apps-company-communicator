@@ -108,6 +108,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
             builder.Services.AddTransient<INotificationService, NotificationService>();
             builder.Services.AddTransient<IStorageClientFactory, StorageClientFactory>();
             builder.Services.AddTransient<IBlobStorageProvider, BlobStorageProvider>();
+            builder.Services.AddTransient<TableRowKeyGenerator>();
 
             // Add the cache services
             builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
