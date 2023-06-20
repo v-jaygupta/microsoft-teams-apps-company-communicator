@@ -225,8 +225,13 @@ export const NewMessage = () => {
           scheduledDate: draftMessageDetail.scheduledDate,
         });
         setScheduleSendCheckBox(draftMessageDetail.isScheduled);
-        setScheduledDatePicker(new Date(draftMessageDetail.scheduledDate));
-        setScheduledTimePicker(new Date(draftMessageDetail.scheduledDate));
+        if (draftMessageDetail.scheduledDate !== null) {
+          setScheduledDatePicker(new Date(draftMessageDetail.scheduledDate));
+          setScheduledTimePicker(new Date(draftMessageDetail.scheduledDate));
+        } else {
+          setScheduledDatePicker(new Date());
+          setScheduledTimePicker(new Date());
+        }
       });
     } catch (error) {
       return error;
@@ -252,6 +257,8 @@ export const NewMessage = () => {
       setMessageState({ ...messageState, isScheduled: true });
     } else {
       setMessageState({ ...messageState, isScheduled: false });
+      setScheduledDatePicker(new Date());
+      setScheduledTimePicker(new Date());
     }
   };
 
