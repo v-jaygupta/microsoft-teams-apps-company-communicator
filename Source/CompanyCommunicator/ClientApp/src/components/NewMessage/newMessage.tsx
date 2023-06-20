@@ -256,7 +256,7 @@ export const NewMessage = () => {
     if (event.target.value === 'on') {
       setMessageState({ ...messageState, isScheduled: true });
     } else {
-      setMessageState({ ...messageState, isScheduled: false });
+      setMessageState({ ...messageState, isScheduled: false, scheduledDate: ''});
       setScheduledDatePicker(new Date());
       setScheduledTimePicker(new Date());
     }
