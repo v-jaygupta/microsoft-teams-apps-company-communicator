@@ -18,6 +18,7 @@ import {
   TableHeaderCell,
   TableRow,
   useArrowNavigationGroup,
+  Body1Strong,
 } from '@fluentui/react-components';
 import {
   DeleteRegular,
@@ -153,7 +154,7 @@ export const ScheduledMessageDetail = (scheduledMessages: any) => {
                   onOpenTaskModule(editUrl(item.id), t('EditMessage'));
                 }}
               >
-                {item.title}
+                <Body1Strong style={{ whiteSpace: 'nowrap' }}>{item.title}</Body1Strong>
               </TableCellLayout>
             </TableCell>
             <TableCell tabIndex={0} role='gridcell'>
@@ -174,7 +175,7 @@ export const ScheduledMessageDetail = (scheduledMessages: any) => {
                           onOpenTaskModule(sendUrl(item.id), t('SendConfirmation'));
                         }}
                       >
-                        {t('Send')}
+                        {t('SendNow')}
                       </MenuItem>
                       {
                         <MenuItem
