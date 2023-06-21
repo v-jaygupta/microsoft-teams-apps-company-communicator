@@ -146,8 +146,6 @@ export const NewMessage = () => {
   const [scheduledDatePicker, setScheduledDatePicker] = React.useState(new Date());
   const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date());
   const [dbscheduledDate, setDbscheduledDate] = React.useState('');
-  const [scheduledSendValidation, setscheduledSendValidation] = React.useState(true);
-
   React.useEffect(() => {
     GetTeamsDataAction(dispatch);
     VerifyGroupAccessAction(dispatch);
@@ -374,8 +372,6 @@ export const NewMessage = () => {
       (rostersSelectedOptions.length > 0 && selectedRadioButton === AudienceSelection.Rosters) ||
       (searchSelectedOptions.length > 0 && selectedRadioButton === AudienceSelection.Groups) ||
       selectedRadioButton === AudienceSelection.AllUsers;
-    let currentDateTime = new Date();
-    currentDateTime = new Date(currentDateTime.setMinutes(currentDateTime.getMinutes() + 30));
 
     // if (scheduleSendCheckBox && (messageState.isScheduled !== null || new Date(messageState.isScheduled) <= currentDateTime)) {
     //   setscheduledSendValidation(false);
