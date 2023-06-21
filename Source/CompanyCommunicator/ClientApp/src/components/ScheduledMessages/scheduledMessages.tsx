@@ -22,7 +22,7 @@ export const ScheduledMessages = () => {
     }
   }, [scheduledMessages]);
 
- CustomHooks.useInterval(() => {
+  CustomHooks.useInterval(() => {
     GetScheduledMessagesAction(dispatch);
   }, delay);
   
