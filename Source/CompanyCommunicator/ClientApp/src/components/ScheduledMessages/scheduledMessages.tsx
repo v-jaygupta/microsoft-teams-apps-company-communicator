@@ -24,8 +24,7 @@ export const ScheduledMessages = () => {
 
   CustomHooks.useInterval(() => {
     GetScheduledMessagesAction(dispatch);
-  }, delay);
-  
+  }, delay); 
   return (
     <>
       {loader && <Spinner labelPosition='below' label='Fetching...' />}
