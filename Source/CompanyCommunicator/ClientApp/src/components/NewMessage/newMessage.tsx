@@ -145,6 +145,8 @@ export const NewMessage = () => {
   const [scheduleSendCheckBox, setScheduleSendCheckBox] = React.useState(false);
   const [scheduledDatePicker, setScheduledDatePicker] = React.useState(new Date());
   const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date());
+  const [dbscheduledDate, setDbscheduledDate] = React.useState('');
+  const [scheduledSendValidation, setscheduledSendValidation] = React.useState(true);
 
   React.useEffect(() => {
     GetTeamsDataAction(dispatch);
@@ -228,6 +230,7 @@ export const NewMessage = () => {
         if (draftMessageDetail.scheduledDate !== null) {
           setScheduledDatePicker(new Date(draftMessageDetail.scheduledDate));
           setScheduledTimePicker(new Date(draftMessageDetail.scheduledDate));
+          setDbscheduledDate(draftMessageDetail.scheduledDate);
         } else {
           setScheduledDatePicker(new Date());
           setScheduledTimePicker(new Date());
@@ -266,6 +269,13 @@ export const NewMessage = () => {
   const handleScheduleSendDate = (selectedDate: Date | null | undefined) => {
     if (selectedDate) {
       setScheduledDatePicker(selectedDate);
+    }
+    if (dbscheduledDate && selectedDate !== new Date(dbscheduledDate)) {
+      const tempDate = selectedDate;
+      tempDate?.setHours(scheduledTimePicker.getHours());
+      tempDate?.setMinutes(scheduledTimePicker.getMinutes());
+      tempDate?.setSeconds(scheduledTimePicker.getSeconds());
+      setMessageState({ ...messageState, scheduledDate: tempDate?.toISOString() });
     }
   };
   // update the state variable whenever the time is changed in the time picker control
@@ -364,8 +374,14 @@ export const NewMessage = () => {
       (rostersSelectedOptions.length > 0 && selectedRadioButton === AudienceSelection.Rosters) ||
       (searchSelectedOptions.length > 0 && selectedRadioButton === AudienceSelection.Groups) ||
       selectedRadioButton === AudienceSelection.AllUsers;
+    let currentDateTime = new Date();
+    currentDateTime = new Date(currentDateTime.setMinutes(currentDateTime.getMinutes() + 30));
 
-    if (msgPageConditions && audPageConditions) {
+    if (scheduleSendCheckBox && (messageState.isScheduled !== null || new Date(messageState.isScheduled) <= currentDateTime)) {
+      setscheduledSendValidation(false);
+    }
+
+    if (msgPageConditions && audPageConditions && scheduledSendValidation) {
       return false;
     } else {
       return true;
