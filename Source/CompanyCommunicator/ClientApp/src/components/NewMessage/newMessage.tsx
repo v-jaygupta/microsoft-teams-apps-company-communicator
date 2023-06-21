@@ -377,11 +377,11 @@ export const NewMessage = () => {
     let currentDateTime = new Date();
     currentDateTime = new Date(currentDateTime.setMinutes(currentDateTime.getMinutes() + 30));
 
-    if (scheduleSendCheckBox && (messageState.isScheduled !== null || new Date(messageState.isScheduled) <= currentDateTime)) {
-      setscheduledSendValidation(false);
-    }
+    // if (scheduleSendCheckBox && (messageState.isScheduled !== null || new Date(messageState.isScheduled) <= currentDateTime)) {
+    //   setscheduledSendValidation(false);
+    // }
 
-    if (msgPageConditions && audPageConditions && scheduledSendValidation) {
+    if (msgPageConditions && audPageConditions) {
       return false;
     } else {
       return true;
