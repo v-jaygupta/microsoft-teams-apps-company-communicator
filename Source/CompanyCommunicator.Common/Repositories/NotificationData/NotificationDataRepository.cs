@@ -1,4 +1,4 @@
-﻿// <copyright file="NotificationDataRepository.cs" company="Microsoft">
+// <copyright file="NotificationDataRepository.cs" company="Microsoft">
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 // </copyright>
@@ -49,7 +49,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         /// <inheritdoc/>
         public async Task<IEnumerable<NotificationDataEntity>> GetAllDraftNotificationsAsync()
         {
-            string scheduledMessageFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, false);
+            var scheduledMessageFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, false);
             var result = await this.GetWithFilterAsync(scheduledMessageFilter, NotificationDataTableNames.DraftNotificationsPartition);
 
             return result;
@@ -251,7 +251,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         /// <inheritdoc/>
         public async Task<IEnumerable<NotificationDataEntity>> GetAllScheduledNotificationsAsync()
         {
-            string isScheduledFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, true);
+            var isScheduledFilter = this.GenerateIsScheduledFilter();
             var result = await this.GetWithFilterAsync(isScheduledFilter, NotificationDataTableNames.DraftNotificationsPartition);
 
             return result;
@@ -261,11 +261,12 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
         public async Task<IEnumerable<NotificationDataEntity>> GetAllPendingScheduledNotificationsAsync()
         {
             DateTime dateTimeNow = DateTime.UtcNow;
-            string isScheduledFilter = TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, true);
-            string scheduleDateFilter = TableQuery.GenerateFilterConditionForDate("ScheduledDate", QueryComparisons.LessThanOrEqual, dateTimeNow);
-            string combineFilter = TableQuery.CombineFilters(isScheduledFilter, TableOperators.And, scheduleDateFilter);
+            string combinedFilter = TableQuery.CombineFilters(
+             this.GenerateIsScheduledFilter(),
+             TableOperators.And,
+             TableQuery.GenerateFilterConditionForDate("ScheduledDate", QueryComparisons.LessThanOrEqual, dateTimeNow));
 
-            var result = await this.GetWithFilterAsync(combineFilter, NotificationDataTableNames.DraftNotificationsPartition);
+            var result = await this.GetWithFilterAsync(combinedFilter, NotificationDataTableNames.DraftNotificationsPartition);
 
             return result;
         }
@@ -275,6 +276,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Common.Repositories.Notificat
             return string.IsNullOrWhiteSpace(originalString)
                 ? newString
                 : $"{originalString}{Environment.NewLine}{newString}";
+        }
+
+        private string GenerateIsScheduledFilter()
+        {
+            return TableQuery.GenerateFilterConditionForBool("IsScheduled", QueryComparisons.Equal, true);
         }
     }
 }
