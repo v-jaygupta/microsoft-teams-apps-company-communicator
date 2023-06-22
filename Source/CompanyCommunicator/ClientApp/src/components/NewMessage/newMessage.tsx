@@ -205,6 +205,8 @@ export const NewMessage = () => {
       } else if (messageState.scheduledDate && new Date(messageState.scheduledDate) > new Date(currentDateTime.toISOString())) {
         setscheduledSendValidation(true);
       }
+    } else {
+      setscheduledSendValidation(true);
     }
   }, [teams, groups, messageState.teams, messageState.rosters, messageState.allUsers, messageState.groups, scheduleSendCheckBox, messageState.scheduledDate, scheduledSendValidation]);
 
