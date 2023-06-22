@@ -6,6 +6,7 @@
 namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.Azure.WebJobs;
     using Microsoft.Azure.WebJobs.Host;
@@ -55,48 +56,77 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Send.Func
         /// <param name="log">The logger.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         [FunctionName("ScheduleSendFunction")]
-        public async Task Run([TimerTrigger("0 */2 * * * *")] TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0 */5 * * * *")] TimerInfo myTimer, ILogger log)
         {
-            log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
-            log.LogInformation($"DelaySendFunction trigger function executed at: {DateTime.Now}");
-
-            var notificationEntities = await this.notificationDataRepository.GetAllPendingScheduledNotificationsAsync();
-            foreach (var scheduledDraft in notificationEntities)
+            try
             {
-                var draftNotificationDataEntity = await this.notificationDataRepository.GetAsync(
-                    NotificationDataTableNames.DraftNotificationsPartition,
-                    scheduledDraft.Id);
+                log.LogInformation($"ScheduleSendFunction timer triggered executed at: {DateTime.Now}");
 
-                log.LogInformation($"draft.Id and ScheduledDateTime {draftNotificationDataEntity.Id}-{draftNotificationDataEntity.Title}....{draftNotificationDataEntity.ScheduledDate}");
-                if (draftNotificationDataEntity.ScheduledDate <= DateTime.Now)
+                var tasks = new List<Task>();
+                var notificationEntities = await this.notificationDataRepository.GetAllPendingScheduledNotificationsAsync();
+                foreach (var scheduledDraft in notificationEntities)
                 {
-                    log.LogInformation($"that means scheduled Date Time less than now: {draftNotificationDataEntity.ScheduledDate}");
+                    var draftNotificationDataEntity = await this.notificationDataRepository.GetAsync(
+                        NotificationDataTableNames.DraftNotificationsPartition,
+                        scheduledDraft.Id);
 
-                    var newSentNotificationId =
-                    await this.notificationDataRepository.MoveDraftToSentPartitionAsync(draftNotificationDataEntity);
-                    log.LogInformation($"newSentNotificationId {newSentNotificationId}");
-
-                    // Ensure the data table needed by the Azure Functions to send the notifications exist in Azure storage.
-                    await this.sentNotificationDataRepository.EnsureSentNotificationDataTableExistsAsync();
-
-                    var prepareToSendQueueMessageContent = new PrepareToSendQueueMessageContent
+                    log.LogInformation($"draft.Id and ScheduledDateTime {draftNotificationDataEntity.Id}-{draftNotificationDataEntity.Title}....{draftNotificationDataEntity.ScheduledDate}");
+                    if (draftNotificationDataEntity.ScheduledDate <= DateTime.Now)
                     {
-                        NotificationId = newSentNotificationId,
-                    };
-                    await this.prepareToSendQueue.SendAsync(prepareToSendQueueMessageContent);
+                        log.LogInformation($"that means scheduled Date Time less than now: {draftNotificationDataEntity.ScheduledDate}");
 
-                    // Send a "force complete" message to the data queue with a delay to ensure that
-                    // the notification will be marked as complete no matter the counts
-                    var forceCompleteDataQueueMessageContent = new DataQueueMessageContent
-                    {
-                        NotificationId = newSentNotificationId,
-                        ForceMessageComplete = true,
-                    };
-                    await this.dataQueue.SendDelayedAsync(
-                        forceCompleteDataQueueMessageContent,
-                        this.forceCompleteMessageDelayInSeconds);
+                        var newSentNotificationId =
+                        await this.notificationDataRepository.MoveDraftToSentPartitionAsync(draftNotificationDataEntity);
+                        log.LogInformation($"newSentNotificationId {newSentNotificationId}");
+
+                        tasks.Add(this.SendScheduledNotifications(newSentNotificationId));
+                        tasks.Add(this.ForceSendScheduleNotifications(newSentNotificationId));
+                    }
                 }
+
+                await Task.WhenAll(tasks);
             }
+            catch (Exception ex)
+            {
+                var errorMessage = $"ScheduleSendFunction failed to run. Exception Message: {ex.Message}";
+                log.LogError(ex, errorMessage);
+            }
+        }
+
+        /// <summary>
+        /// This queues the message to prepare to send queue in service bus.
+        /// </summary>
+        /// <param name="sentNotificationId">The new sent notification Id.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        private async Task SendScheduledNotifications(string sentNotificationId)
+        {
+            // Ensure the data table needed by the Azure Functions to send the notifications exist in Azure storage.
+            await this.sentNotificationDataRepository.EnsureSentNotificationDataTableExistsAsync();
+
+            var prepareToSendQueueMessageContent = new PrepareToSendQueueMessageContent
+            {
+                NotificationId = sentNotificationId,
+            };
+            await this.prepareToSendQueue.SendAsync(prepareToSendQueueMessageContent);
+        }
+
+        /// <summary>
+        /// This sends a force complete message to data queue in service bus.
+        /// </summary>
+        /// <param name="sentNotificationId">The new sent notification Id.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        private async Task ForceSendScheduleNotifications(string sentNotificationId)
+        {
+            // Send a "force complete" message to the data queue with a delay to ensure that
+            // the notification will be marked as complete no matter the counts
+            var forceCompleteDataQueueMessageContent = new DataQueueMessageContent
+            {
+                NotificationId = sentNotificationId,
+                ForceMessageComplete = true,
+            };
+            await this.dataQueue.SendDelayedAsync(
+                forceCompleteDataQueueMessageContent,
+                this.forceCompleteMessageDelayInSeconds);
         }
     }
 }
