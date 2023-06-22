@@ -194,7 +194,9 @@ export const NewMessage = () => {
     if (messageState.allUsers) {
       setAllUsersState(true);
     }
+  }, [teams, groups, messageState.teams, messageState.rosters, messageState.allUsers, messageState.groups]);
 
+  React.useEffect(() => {
     let currentDateTime = new Date();
     currentDateTime = new Date(currentDateTime.setMinutes(currentDateTime.getMinutes() + 30));
     if (scheduleSendCheckBox) {
@@ -208,7 +210,7 @@ export const NewMessage = () => {
     } else {
       setscheduledSendValidation(true);
     }
-  }, [teams, groups, messageState.teams, messageState.rosters, messageState.allUsers, messageState.groups, scheduleSendCheckBox, messageState.scheduledDate, scheduledSendValidation]);
+  }, [scheduleSendCheckBox, messageState.scheduledDate, scheduledSendValidation]);
 
   const getDraftNotificationItem = async (id: number) => {
     try {
