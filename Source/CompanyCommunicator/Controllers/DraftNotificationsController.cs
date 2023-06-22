@@ -394,7 +394,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Controllers
             }
 
             // sorts the scheduled draft messages by date from the most recent
-            result.Sort((r1, r2) => r1.ScheduledDate.Value.CompareTo(r2.ScheduledDate.Value));
+            result = result.OrderBy(r => r.ScheduledDate).ToList();
             return result;
         }
 
