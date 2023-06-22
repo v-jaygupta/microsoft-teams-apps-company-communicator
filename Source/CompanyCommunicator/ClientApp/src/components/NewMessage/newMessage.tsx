@@ -272,10 +272,16 @@ export const NewMessage = () => {
 
   const handleScheduleSendCheckBox = (event: any) => {
     setScheduleSendCheckBox((scheduleSendCheckBox) => !scheduleSendCheckBox);
-    if (event.target.value === 'on') {
+    if (event.target.checked) {
       setMessageState({ ...messageState, isScheduled: true });
     } else {
-      setMessageState({ ...messageState, isScheduled: false, scheduledDate: '' });
+      setMessageState({ ...messageState, isScheduled: false });
+      if (messageState.scheduledDate) {
+        setMessageState(current => {
+          const { scheduledDate, ...messageState } = current;
+          return messageState;
+        });
+      }
       setScheduledDatePicker(new Date());
       setScheduledTimePicker(new Date());
     }
