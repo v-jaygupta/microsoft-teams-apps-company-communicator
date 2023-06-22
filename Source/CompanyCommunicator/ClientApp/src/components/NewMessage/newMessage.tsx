@@ -146,6 +146,8 @@ export const NewMessage = () => {
   const [scheduledDatePicker, setScheduledDatePicker] = React.useState(new Date());
   const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date());
   const [dbscheduledDate, setDbscheduledDate] = React.useState('');
+  const [scheduledSendValidation, setscheduledSendValidation] = React.useState(true);
+
   React.useEffect(() => {
     GetTeamsDataAction(dispatch);
     VerifyGroupAccessAction(dispatch);
@@ -192,7 +194,19 @@ export const NewMessage = () => {
     if (messageState.allUsers) {
       setAllUsersState(true);
     }
-  }, [teams, groups, messageState.teams, messageState.rosters, messageState.allUsers, messageState.groups]);
+
+    let currentDateTime = new Date();
+    currentDateTime = new Date(currentDateTime.setMinutes(currentDateTime.getMinutes() + 30));
+    if (scheduleSendCheckBox) {
+      if (messageState.scheduledDate === undefined) {
+        setscheduledSendValidation(false);
+      } else if (messageState.scheduledDate && new Date(messageState.scheduledDate) <= new Date(currentDateTime.toISOString())) {
+        setscheduledSendValidation(false);
+      } else if (messageState.scheduledDate && new Date(messageState.scheduledDate) > new Date(currentDateTime.toISOString())) {
+        setscheduledSendValidation(true);
+      }
+    }
+  }, [teams, groups, messageState.teams, messageState.rosters, messageState.allUsers, messageState.groups, scheduleSendCheckBox, messageState.scheduledDate, scheduledSendValidation]);
 
   const getDraftNotificationItem = async (id: number) => {
     try {
@@ -267,6 +281,12 @@ export const NewMessage = () => {
   const handleScheduleSendDate = (selectedDate: Date | null | undefined) => {
     if (selectedDate) {
       setScheduledDatePicker(selectedDate);
+      if (scheduledTimePicker && selectedDate !== scheduledTimePicker) {
+        selectedDate?.setHours(scheduledTimePicker.getHours());
+        selectedDate?.setMinutes(scheduledTimePicker.getMinutes());
+        selectedDate?.setSeconds(scheduledTimePicker.getSeconds());
+        setScheduledTimePicker(selectedDate);
+      }
     }
     if (dbscheduledDate && selectedDate !== new Date(dbscheduledDate)) {
       const tempDate = selectedDate;
@@ -373,11 +393,7 @@ export const NewMessage = () => {
       (searchSelectedOptions.length > 0 && selectedRadioButton === AudienceSelection.Groups) ||
       selectedRadioButton === AudienceSelection.AllUsers;
 
-    // if (scheduleSendCheckBox && (messageState.isScheduled !== null || new Date(messageState.isScheduled) <= currentDateTime)) {
-    //   setscheduledSendValidation(false);
-    // }
-
-    if (msgPageConditions && audPageConditions) {
+    if (msgPageConditions && audPageConditions && scheduledSendValidation) {
       return false;
     } else {
       return true;
