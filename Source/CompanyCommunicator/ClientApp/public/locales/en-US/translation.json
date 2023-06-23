@@ -149,7 +149,7 @@
   "Cancel": "Cancel",
   "MoreOptions": "More Options",
   "ScheduleSend": "Schedule Send",
-  "ScheduleSection": "Select a Date and Time to schedule your message.",
+  "ScheduleSection": "Select a date and time to schedule your message.",
   "ScheduleNote": "Note: Please schedule at least 30 Minutes in the future.",
   "SendNow": "Send Now"
 }
