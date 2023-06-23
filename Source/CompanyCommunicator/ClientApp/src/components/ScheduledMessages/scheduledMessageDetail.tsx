@@ -130,14 +130,14 @@ export const ScheduledMessageDetail = (scheduledMessages: any) => {
     <Table {...keyboardNavAttr} role='grid' aria-label='Scheduled messages table with grid keyboard navigation'>
       <TableHeader>
         <TableRow>
-          <TableHeaderCell key='title'>
-            <b>{t('TitleText')}</b>
+          <TableHeaderCell key='title' style={{ width: '55%' }}>
+            <Body1Strong>{t('TitleText')}</Body1Strong>
           </TableHeaderCell>
           <TableHeaderCell key='schedule'>
-            <b>{t('Schedule')}</b>
+            <Body1Strong>{t('Schedule')}</Body1Strong>
           </TableHeaderCell>
           <TableHeaderCell key='actions' style={{ width: '50px' }}>
-            <b>Actions</b>
+            <Body1Strong>{t('actions')}</Body1Strong>
           </TableHeaderCell>
         </TableRow>
       </TableHeader>
