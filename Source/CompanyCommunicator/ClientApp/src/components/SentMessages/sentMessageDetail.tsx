@@ -22,7 +22,8 @@ import {
   TableRow,
   Tooltip,
   useArrowNavigationGroup,
-  Body1Strong
+  Body1Strong,
+  Persona
 } from '@fluentui/react-components';
 import {
   CalendarCancel16Regular,
@@ -34,6 +35,10 @@ import {
   DismissCircle16Regular,
   Warning16Regular,
   CheckmarkCircle16Regular,
+  CheckmarkSquare24Regular,
+  ShareScreenStop24Regular,
+  BookExclamationMark24Regular,
+  Warning24Regular
 } from '@fluentui/react-icons';
 import { dialog, DialogDimension, UrlDialogInfo } from '@microsoft/teams-js';
 import { GetDraftMessagesSilentAction, GetSentMessagesSilentAction } from '../../actions';
@@ -124,111 +129,272 @@ export const SentMessageDetail = (sentMessages: any) => {
     }
   };
 
-  return (
-    <Table {...keyboardNavAttr} role='grid' className='sent-messages' aria-label={t('sentMessagesGridNavigation') ?? ''}>
-      <TableHeader>
-        <TableRow>
-          <TableHeaderCell key='message' style={{ width: '55%' }}>
-            <Body1Strong>{t('message')}</Body1Strong>
-          </TableHeaderCell>
-          <TableHeaderCell key='recipients'>
-            <Body1Strong>{t('Recipients')}</Body1Strong>
-          </TableHeaderCell>
-          <TableHeaderCell key='actions' style={{ width: '50px' }}>
-            <Body1Strong>{t('actions')}</Body1Strong>
-          </TableHeaderCell>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sentMessages.sentMessages?.map((item: any) => (
-          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-          <TableRow key={`${item.id}key`}>
-            <TableCell tabIndex={0} role='gridcell'>
-              <TableCellLayout
-                media={<Chat20Regular />}
-                title={item.title}
-                style={{ cursor: 'pointer' }}
-                truncate
-                onClick={() => {
-                  onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
-                }}
-              >
-                <Body1Strong style={{ whiteSpace: 'nowrap' }}>{item.title}</Body1Strong>
-                {renderSendingText(item) && <><br /><Badge size='small' appearance="tint" color="warning">{renderSendingText(item)}</Badge></>}
-                {item.sentDate && <><br /><Badge size='small' appearance="tint" color="informative">{item.sentDate}</Badge></>}
-                <br />
-                <Caption1>{item.createdBy}</Caption1>
-              </TableCellLayout>
-            </TableCell>
-            <TableCell tabIndex={0} role='gridcell'>
-              <TableCellLayout>
-                <Tooltip content={t('TooltipSuccess') ?? ''} relationship='label'>
-                  <span style={{ paddingLeft: '2px' }}>
-                    <Badge appearance="tint" icon={<CheckmarkCircle16Regular />} color="success">{formatNumber(item.succeeded)}</Badge>
-                  </span>
-                </Tooltip>
-                <Tooltip content={t('TooltipFailure') ?? ''} relationship='label'>
-                  <span style={{ paddingLeft: '2px' }}>
-                    <Badge appearance="tint" icon={<DismissCircle16Regular />} color="severe">{formatNumber(item.failed)}</Badge>
-                  </span>
-                </Tooltip>
-                {item.canceled && (
-                  <>
-                    <Tooltip content='Canceled' relationship='label'>
-                      <span style={{ paddingLeft: '2px' }}>
-                        <Badge appearance="tint" icon={<CalendarCancel16Regular />} color="danger">{formatNumber(item.canceled)}</Badge>
-                      </span>
-                    </Tooltip>
-                  </>
-                )}
-                {item.unknown && (
-                  <>
-                    <Tooltip content='Unknown' relationship='label'>
-                      <span style={{ paddingLeft: '2px' }}>
-                        <Badge appearance="tint" icon={<Warning16Regular />} color="warning">{formatNumber(item.unknown)}</Badge>
-                      </span>
-                    </Tooltip>
-                  </>
-                )}
-              </TableCellLayout>
-            </TableCell>
-            <TableCell role='gridcell' style={{ width: '50px' }}>
-              <TableCellLayout style={{ float: 'right' }}>
-                <Menu>
-                  <MenuTrigger disableButtonEnhancement>
-                    <Button aria-label='Actions menu' icon={<MoreHorizontal24Filled />} />
-                  </MenuTrigger>
-                  <MenuPopover>
-                    <MenuList>
-                      <MenuItem
-                        icon={<ChatMultiple24Regular />}
-                        key={'viewStatusKey'}
-                        onClick={() => {
-                          onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
-                        }}
-                      >
-                        {t('ViewStatus')}
-                      </MenuItem>
-                      {
-                        // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
-                        <MenuItem key={'duplicateKey'} icon={<DocumentCopyRegular />} onClick={() => duplicateDraftMessage(item.id)}>
-                          {t('Duplicate')}
-                        </MenuItem>
-                      }
-                      {!shouldNotShowCancel(item) && (
-                        // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
-                        <MenuItem key={'cancelKey'} icon={<CalendarCancel24Regular />} onClick={() => cancelSentMessage(item.id)}>
-                          {t('Cancel')}
-                        </MenuItem>
-                      )}
-                    </MenuList>
-                  </MenuPopover>
-                </Menu>
-              </TableCellLayout>
-            </TableCell>
+  const countStatusMsg = () => {
+    return sentMessages?.sentMessages?.filter((x: any) => x.status && x.status !== 'Canceled' && x.status !== 'Sent' && x.status !== 'Failed').length;
+  };
+
+  const mobileRender = () => {
+    return (
+      <Table {...keyboardNavAttr} role='grid' className='sent-messages' aria-label={t('sentMessagesGridNavigation') ?? ''}>
+        <TableHeader>
+          <TableRow>
+            <TableHeaderCell key='message' style={{ width: '58%' }}>
+              <Body1Strong>{t('message')}</Body1Strong>
+            </TableHeaderCell>
+            <TableHeaderCell key='recipients'>
+              <Body1Strong>{t('Recipients')}</Body1Strong>
+            </TableHeaderCell>
+            <TableHeaderCell key='actions' style={{ width: '50px' }}>
+              <Body1Strong>{t('actions')}</Body1Strong>
+            </TableHeaderCell>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sentMessages.sentMessages?.map((item: any) => (
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            <TableRow key={`${item.id}key`}>
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout
+                  media={<Chat20Regular />}
+                  title={item.title}
+                  style={{ cursor: 'pointer' }}
+                  truncate
+                  onClick={() => {
+                    onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
+                  }}
+                >
+                  <Body1Strong style={{ whiteSpace: 'nowrap' }}>{item.title}</Body1Strong>
+                  {renderSendingText(item) && <><br /><Badge size='small' appearance="tint" color="warning">{renderSendingText(item)}</Badge></>}
+                  {item.sentDate && <><br /><Badge size='small' appearance="tint" color="informative">{item.sentDate}</Badge></>}
+                  <br />
+                  <Caption1>{item.createdBy}</Caption1>
+                </TableCellLayout>
+              </TableCell>
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout>
+                  <Tooltip content={t('TooltipSuccess') ?? ''} relationship='label'>
+                    <span style={{ paddingLeft: '2px' }}>
+                      <Badge appearance="tint" icon={<CheckmarkCircle16Regular />} color="success">{formatNumber(item.succeeded)}</Badge>
+                    </span>
+                  </Tooltip>
+                  <Tooltip content={t('TooltipFailure') ?? ''} relationship='label'>
+                    <span style={{ paddingLeft: '2px' }}>
+                      <Badge appearance="tint" icon={<DismissCircle16Regular />} color="severe">{formatNumber(item.failed)}</Badge>
+                    </span>
+                  </Tooltip>
+                  {item.canceled && (
+                    <>
+                      <Tooltip content='Canceled' relationship='label'>
+                        <span style={{ paddingLeft: '2px' }}>
+                          <Badge appearance="tint" icon={<CalendarCancel16Regular />} color="danger">{formatNumber(item.canceled)}</Badge>
+                        </span>
+                      </Tooltip>
+                    </>
+                  )}
+                  {item.unknown && (
+                    <>
+                      <Tooltip content='Unknown' relationship='label'>
+                        <span style={{ paddingLeft: '2px' }}>
+                          <Badge appearance="tint" icon={<Warning16Regular />} color="warning">{formatNumber(item.unknown)}</Badge>
+                        </span>
+                      </Tooltip>
+                    </>
+                  )}
+                </TableCellLayout>
+              </TableCell>
+              <TableCell role='gridcell' style={{ width: '50px' }}>
+                <TableCellLayout style={{ float: 'right' }}>
+                  <Menu>
+                    <MenuTrigger disableButtonEnhancement>
+                      <Button aria-label='Actions menu' icon={<MoreHorizontal24Filled />} />
+                    </MenuTrigger>
+                    <MenuPopover>
+                      <MenuList>
+                        <MenuItem
+                          icon={<ChatMultiple24Regular />}
+                          key={'viewStatusKey'}
+                          onClick={() => {
+                            onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
+                          }}
+                        >
+                          {t('ViewStatus')}
+                        </MenuItem>
+                        {
+                          // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
+                          <MenuItem key={'duplicateKey'} icon={<DocumentCopyRegular />} onClick={() => duplicateDraftMessage(item.id)}>
+                            {t('Duplicate')}
+                          </MenuItem>
+                        }
+                        {!shouldNotShowCancel(item) && (
+                          // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
+                          <MenuItem key={'cancelKey'} icon={<CalendarCancel24Regular />} onClick={() => cancelSentMessage(item.id)}>
+                            {t('Cancel')}
+                          </MenuItem>
+                        )}
+                      </MenuList>
+                    </MenuPopover>
+                  </Menu>
+                </TableCellLayout>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const desktopRender = () => {
+    return (
+      <Table {...keyboardNavAttr} role='grid' className='sent-messages' aria-label={t('sentMessagesGridNavigation') ?? ''}>
+        <TableHeader>
+          <TableRow>
+            <TableHeaderCell key='title' style={{ width: '45%' }}>
+              <b>{t('TitleText')}</b>
+            </TableHeaderCell>
+            {countStatusMsg() > 0 && <TableHeaderCell key='status' aria-hidden='true' />}
+            <TableHeaderCell key='recipients'>
+              <b>{t('Recipients')}</b>
+            </TableHeaderCell>
+            <TableHeaderCell key='sent'>
+              <b>{t('Sent')}</b>
+            </TableHeaderCell>
+            <TableHeaderCell key='createdBy'>
+              <b>{t('CreatedBy')}</b>
+            </TableHeaderCell>
+            <TableHeaderCell key='actions' style={{ width: '50px' }}>
+              <b>{t('actions')}</b>
+            </TableHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sentMessages.sentMessages?.map((item: any) => (
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            <TableRow key={`${item.id}key`}>
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout
+                  media={<Chat20Regular />}
+                  title={item.title}
+                  style={{ cursor: 'pointer' }}
+                  truncate
+                  onClick={() => {
+                    onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
+                  }}
+                >
+                  {item.title}
+                </TableCellLayout>
+              </TableCell>
+              {countStatusMsg() > 0 && (
+                <TableCell tabIndex={0} role='gridcell'>
+                  <TableCellLayout truncate>
+                    {renderSendingText(item)}
+                  </TableCellLayout>
+                </TableCell>
+              )}
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout>
+                  <div style={{ display: 'inline-block' }}>
+                    <Tooltip content={t('TooltipSuccess') ?? ''} relationship='label'>
+                      <Button
+                        appearance='subtle'
+                        icon={<CheckmarkSquare24Regular style={{ color: '#22bb33', verticalAlign: 'middle' }} />}
+                        size='small'
+                      ></Button>
+                    </Tooltip>
+                    <span className='recipient-text'>{formatNumber(item.succeeded)}</span>
+                  </div>
+                  <div style={{ display: 'inline-block' }}>
+                    <Tooltip content={t('TooltipFailure') ?? ''} relationship='label'>
+                      <Button
+                        appearance='subtle'
+                        icon={<ShareScreenStop24Regular style={{ color: '#bb2124', verticalAlign: 'middle' }} />}
+                        size='small'
+                      ></Button>
+                    </Tooltip>
+                    <span className='recipient-text'>{formatNumber(item.failed)}</span>
+                  </div>
+                  {item.canceled && (
+                    <div style={{ display: 'inline-block' }}>
+                      <Tooltip content='Canceled' relationship='label'>
+                        <Button
+                          appearance='subtle'
+                          icon={<BookExclamationMark24Regular style={{ color: '#f0ad4e', verticalAlign: 'middle' }} />}
+                          size='small'
+                        ></Button>
+                      </Tooltip>
+                      <span className='recipient-text'>{formatNumber(item.canceled)}</span>
+                    </div>
+                  )}
+                  {item.unknown && (
+                    <div style={{ display: 'inline-block' }}>
+                      <Tooltip content='Unknown' relationship='label'>
+                        <Button
+                          appearance='subtle'
+                          icon={<Warning24Regular style={{ color: '#e9835e', verticalAlign: 'middle' }} />}
+                          size='small'
+                        ></Button>
+                      </Tooltip>
+                      <span className='recipient-text'>{formatNumber(item.unknown)}</span>
+                    </div>
+                  )}
+                </TableCellLayout>
+              </TableCell>
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout truncate>{item.sentDate}</TableCellLayout>
+              </TableCell>
+              <TableCell tabIndex={0} role='gridcell'>
+                <TableCellLayout truncate title={item.createdBy}>
+                  <Persona size='extra-small' textAlignment='center' name={item.createdBy} secondaryText={'Member'} avatar={{ color: 'colorful' }} />
+                </TableCellLayout>
+              </TableCell>
+              <TableCell role='gridcell' style={{ width: '50px' }}>
+                <TableCellLayout style={{ float: 'right' }}>
+                  <Menu>
+                    <MenuTrigger disableButtonEnhancement>
+                      <Button aria-label='Actions menu' icon={<MoreHorizontal24Filled />} />
+                    </MenuTrigger>
+                    <MenuPopover>
+                      <MenuList>
+                        <MenuItem
+                          icon={<ChatMultiple24Regular />}
+                          key={'viewStatusKey'}
+                          onClick={() => {
+                            onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
+                          }}
+                        >
+                          {t('ViewStatus')}
+                        </MenuItem>
+                        {
+                          // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
+                          <MenuItem key={'duplicateKey'} icon={<DocumentCopyRegular />} onClick={() => duplicateDraftMessage(item.id)}>
+                            {t('Duplicate')}
+                          </MenuItem>
+                        }
+                        {!shouldNotShowCancel(item) && (
+                          // eslint-disable-next-line @typescript-eslint/no-misused-promises, @typescript-eslint/promise-function-async
+                          <MenuItem key={'cancelKey'} icon={<CalendarCancel24Regular />} onClick={() => cancelSentMessage(item.id)}>
+                            {t('Cancel')}
+                          </MenuItem>
+                        )}
+                      </MenuList>
+                    </MenuPopover>
+                  </Menu>
+                </TableCellLayout>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  return (
+    <div>
+      <div className='desktop-render'>
+        {desktopRender()}
+      </div>
+      <div className='mobile-render'>
+        {mobileRender()}
+      </div>
+    </div>
   );
 };
