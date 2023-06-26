@@ -18,7 +18,11 @@
         padding: 1rem;
     }
 
-    .big-screen-visible {
+    .mobile-render {
+        display: none;
+    }
+
+    .desktop-render {
         display: block;
     }
 }
@@ -45,7 +49,11 @@
         max-width: 767px;
     }
 
-    .big-screen-visible {
+    .mobile-render {
+        display: block;
+    }
+
+    .desktop-render {
         display: none;
     }
 }
