@@ -31,4 +31,9 @@
             }
         }
     }
+    div[class~="validationText"] {
+        margin-left: 36px;
+        display: flex;
+        color: red;
+    }
 }
