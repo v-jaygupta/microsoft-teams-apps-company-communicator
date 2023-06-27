@@ -150,6 +150,8 @@
   "MoreOptions": "More Options",
   "ScheduleSend": "Schedule Send",
   "ScheduleSection": "Select a date and time to schedule your message.",
-  "ScheduleNote": "Note: Please schedule at least 30 Minutes in the future.",
-  "SendNow": "Send Now"
+  "ScheduleNote": "Note: Schedule at least 30 Minutes in the future.",
+  "SendNow": "Send Now",
+  "Schedule": "Schedule",
+  "ScheduleTimeValidation": "Scheduled time is less than 30 Minutes."
 }
