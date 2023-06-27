@@ -147,6 +147,7 @@ export const NewMessage = () => {
   const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date());
   const [dbscheduledDate, setDbscheduledDate] = React.useState('');
   const [scheduledSendValidation, setscheduledSendValidation] = React.useState(true);
+  const [scheduledSendTimeValidation, setscheduledSendTimeValidation] = React.useState(false);
 
   React.useEffect(() => {
     GetTeamsDataAction(dispatch);
@@ -204,8 +205,10 @@ export const NewMessage = () => {
         setscheduledSendValidation(false);
       } else if (messageState.scheduledDate && new Date(messageState.scheduledDate) <= new Date(currentDateTime.toISOString())) {
         setscheduledSendValidation(false);
+        setscheduledSendTimeValidation(true);
       } else if (messageState.scheduledDate && new Date(messageState.scheduledDate) > new Date(currentDateTime.toISOString())) {
         setscheduledSendValidation(true);
+        setscheduledSendTimeValidation(false);
       }
     } else {
       setscheduledSendValidation(true);
@@ -270,6 +273,7 @@ export const NewMessage = () => {
     setCardBtn(card, buttonTitleAsString, 'https://adaptivecards.io');
   };
 
+  // update the state variable whenever the checkbox is checked or unchecked
   const handleScheduleSendCheckBox = (event: any) => {
     setScheduleSendCheckBox((scheduleSendCheckBox) => !scheduleSendCheckBox);
     if (event.target.checked) {
@@ -1024,21 +1028,19 @@ export const NewMessage = () => {
               {scheduleSendCheckBox && (
                 <div>
                   <Label
-                    size='small'
                     id='ScheduleSection'
                     className='info-text'
                     style={{ marginBottom: '5px', display: 'block', marginLeft: '36px' }}
                   >
                     {t('ScheduleSection')}
                   </Label>
-                  <Label
-                    size='small'
+                  <Text
                     id='ScheduleNote'
                     className='info-text'
                     style={{ marginBottom: '5px', display: 'block', marginLeft: '36px' }}
                   >
                     {t('ScheduleNote')}
-                  </Label>
+                  </Text>
                   <div className='schedulesend-datetime'>
                     <DatePicker
                       value={scheduledDatePicker ?? new Date()}
@@ -1057,8 +1059,14 @@ export const NewMessage = () => {
                       calloutProps={{ directionalHintFixed: true, doNotLayer: true }}
                       ariaLabel={'Scheduled Time required'}
                       className='schedule-timepicker'
+                      useHour12={true}
                     />
                   </div>
+                  {scheduledSendTimeValidation && (
+                    <div className='validationText'>
+                      <Text>{t('ScheduleTimeValidation')}</Text>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1091,7 +1099,7 @@ export const NewMessage = () => {
                     onClick={onSave}
                     appearance='primary'
                   >
-                    {t('SaveAsDraft')}
+                    {scheduleSendCheckBox ? t('Schedule') : t('SaveAsDraft')}
                   </Button>
                 </div>
               </div>
