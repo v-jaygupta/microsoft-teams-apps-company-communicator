@@ -161,7 +161,7 @@ export const ScheduledMessageDetail = (scheduledMessages: any) => {
               <TableCellLayout truncate>{formatDate(item.scheduledDate)}</TableCellLayout>
             </TableCell>
             <TableCell role='gridcell' style={{ width: '50px' }}>
-              <TableCellLayout>
+              <TableCellLayout style={{ float: 'right' }}>
                 <Menu>
                   <MenuTrigger disableButtonEnhancement>
                     <Button aria-label='Actions menu' icon={<MoreHorizontal24Filled />} />
