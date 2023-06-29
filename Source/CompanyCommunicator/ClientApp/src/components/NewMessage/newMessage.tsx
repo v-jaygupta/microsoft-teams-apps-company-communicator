@@ -1063,6 +1063,7 @@ export const NewMessage = () => {
                       ariaLabel={'Scheduled Time required'}
                       className='schedule-timepicker'
                       useHour12={true}
+                      allowFreeform={false}
                     />
                   </div>
                   {scheduledSendTimeValidation && (
