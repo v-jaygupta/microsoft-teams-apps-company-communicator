@@ -143,8 +143,8 @@ export const NewMessage = () => {
   const [rostersSelectedOptions, setRostersSelectedOptions] = React.useState<ITeamTemplate[]>([]);
   const [searchSelectedOptions, setSearchSelectedOptions] = React.useState<ITeamTemplate[]>([]);
   const [scheduleSendCheckBox, setScheduleSendCheckBox] = React.useState(false);
-  const [scheduledDatePicker, setScheduledDatePicker] = React.useState(new Date());
-  const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date());
+  const [scheduledDatePicker, setScheduledDatePicker] = React.useState(new Date(new Date().setMinutes(new Date().getMinutes() + 30)));
+  const [scheduledTimePicker, setScheduledTimePicker] = React.useState(new Date(new Date().setMinutes(new Date().getMinutes() + 30)));
   const [dbscheduledDate, setDbscheduledDate] = React.useState('');
   const [scheduledSendValidation, setscheduledSendValidation] = React.useState(true);
   const [scheduledSendTimeValidation, setscheduledSendTimeValidation] = React.useState(false);
@@ -251,8 +251,7 @@ export const NewMessage = () => {
           setScheduledTimePicker(new Date(draftMessageDetail.scheduledDate));
           setDbscheduledDate(draftMessageDetail.scheduledDate);
         } else {
-          setScheduledDatePicker(new Date());
-          setScheduledTimePicker(new Date());
+          initializeTimePicker();
         }
       });
     } catch (error) {
@@ -273,6 +272,11 @@ export const NewMessage = () => {
     setCardBtn(card, buttonTitleAsString, 'https://adaptivecards.io');
   };
 
+  const initializeTimePicker = () => {
+    setScheduledDatePicker(new Date(new Date().setMinutes(new Date().getMinutes() + 30)));
+    setScheduledTimePicker(new Date(new Date().setMinutes(new Date().getMinutes() + 30)));
+  };
+
   // update the state variable whenever the checkbox is checked or unchecked
   const handleScheduleSendCheckBox = (event: any) => {
     setScheduleSendCheckBox((scheduleSendCheckBox) => !scheduleSendCheckBox);
@@ -286,8 +290,7 @@ export const NewMessage = () => {
           return messageState;
         });
       }
-      setScheduledDatePicker(new Date());
-      setScheduledTimePicker(new Date());
+      initializeTimePicker();
     }
   };
 
@@ -1043,7 +1046,7 @@ export const NewMessage = () => {
                   </Text>
                   <div className='schedulesend-datetime'>
                     <DatePicker
-                      value={scheduledDatePicker ?? new Date()}
+                      value={scheduledDatePicker}
                       onSelectDate={handleScheduleSendDate}
                       minDate={new Date()}
                       placeholder='Select a date'
@@ -1053,7 +1056,7 @@ export const NewMessage = () => {
                     />
                     <TimePicker
                       dateAnchor={scheduledDatePicker}
-                      value={scheduledTimePicker ?? new Date()}
+                      value={scheduledTimePicker}
                       placeholder='Select a time'
                       onChange={handleScheduleSendTime}
                       calloutProps={{ directionalHintFixed: true, doNotLayer: true }}
