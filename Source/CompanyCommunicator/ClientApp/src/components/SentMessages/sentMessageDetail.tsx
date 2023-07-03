@@ -142,10 +142,10 @@ export const SentMessageDetail = (sentMessages: any) => {
               <Body1Strong>{t('message')}</Body1Strong>
             </TableHeaderCell>
             <TableHeaderCell key='recipients'>
-              <Body1Strong>{t('Recipients')}</Body1Strong>
+              <Body1Strong style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{t('Recipients')}</Body1Strong>
             </TableHeaderCell>
             <TableHeaderCell key='actions' style={{ width: '50px' }}>
-              <Body1Strong>{t('actions')}</Body1Strong>
+              <Body1Strong style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{t('actions')}</Body1Strong>
             </TableHeaderCell>
           </TableRow>
         </TableHeader>
