@@ -316,6 +316,9 @@ export const NewMessage = () => {
   // update the state variable whenever the time is changed in the time picker control
   const handleScheduleSendTime = (_ev: React.FormEvent<IComboBox>, selectedTime: Date) => {
     if (selectedTime) {
+      if (scheduledDatePicker && selectedTime !== scheduledDatePicker) {
+        selectedTime?.setDate(scheduledTimePicker.getDate());
+      }
       setScheduledTimePicker(selectedTime);
       setMessageState({ ...messageState, scheduledDate: selectedTime.toISOString() });
     }
@@ -1068,7 +1071,7 @@ export const NewMessage = () => {
                   </div>
                   {scheduledSendTimeValidation && (
                     <div className='validationText'>
-                      <Text>{t('ScheduleTimeValidation')}</Text>
+                      <Text role='alert'>{t('ScheduleTimeValidation')}</Text>
                     </div>
                   )}
                 </div>
