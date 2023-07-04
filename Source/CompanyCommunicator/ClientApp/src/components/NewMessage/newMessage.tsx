@@ -1071,7 +1071,7 @@ export const NewMessage = () => {
                   </div>
                   {scheduledSendTimeValidation && (
                     <div className='validationText'>
-                      <Text>{t('ScheduleTimeValidation')}</Text>
+                      <Text role='alert'>{t('ScheduleTimeValidation')}</Text>
                     </div>
                   )}
                 </div>
