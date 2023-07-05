@@ -50,7 +50,8 @@
       }
       div[class~='schedule-datepicker'] {
         width: 65%;
-        height: 70px;
+        div[class~='ms-TextField-fieldGroup']{
+            height: 40px;
       }
     }
     .flex-container {
