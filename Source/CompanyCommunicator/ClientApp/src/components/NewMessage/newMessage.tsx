@@ -1047,7 +1047,7 @@ export const NewMessage = () => {
                   >
                     {t('ScheduleNote')}
                   </Text>
-                  <div className='schedulesend-datetime'>
+                  <div className='flex-container schedulesend-datetime'>
                     <DatePicker
                       value={scheduledDatePicker}
                       onSelectDate={handleScheduleSendDate}
