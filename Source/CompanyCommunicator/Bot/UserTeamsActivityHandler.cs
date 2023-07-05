@@ -6,12 +6,14 @@
 namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Bot.Builder;
     using Microsoft.Bot.Builder.Teams;
     using Microsoft.Bot.Schema;
     using Microsoft.Bot.Schema.Teams;
+    using Microsoft.Teams.Apps.CompanyCommunicator.Models;
 
     /// <summary>
     /// Company Communicator User Bot.
@@ -22,6 +24,10 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
         private static readonly string TeamRenamedEventType = "teamRenamed";
 
         private readonly TeamsDataCapture teamsDataCapture;
+
+        // ReadReceiptObject can be any object. It is currently tracking the id of a message that bot sent & bot cares,
+        // the read status of the message, the AAD id of the user who read the message.
+        private ConcurrentDictionary<string, ReadReceiptObject> trackTheMessageBotCaresPerThread;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserTeamsActivityHandler"/> class.
@@ -67,6 +73,26 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
             {
                 await this.teamsDataCapture.OnBotRemovedAsync(activity);
             }
+        }
+
+        /// <inheritdoc/>
+        protected override async Task OnTeamsReadReceiptAsync(ReadReceiptInfo readReceiptInfo, ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
+        {
+            await Task.Run(() =>
+            {
+                var threadId = turnContext.Activity.Conversation.Id;
+
+                if (this.trackTheMessageBotCaresPerThread.ContainsKey(threadId))
+                {
+                    ReadReceiptObject readReceiptObject = this.trackTheMessageBotCaresPerThread[threadId];
+                    bool isMessageRead = readReceiptInfo.IsMessageRead(readReceiptObject.BotSentMessageId);
+
+                    // the below line is helpful when a bot developer wants to do something for
+                    // messages that were read vs messages that were not read.
+                    // ex: Bot developers can query all the messages that were not read and follow up differently.
+                    readReceiptObject.IsMessageRead = isMessageRead;
+                }
+            });
         }
 
         private bool IsTeamInformationUpdated(IConversationUpdateActivity activity)
