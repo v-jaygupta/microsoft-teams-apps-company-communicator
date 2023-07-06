@@ -13,6 +13,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
     using Microsoft.Bot.Builder.Teams;
     using Microsoft.Bot.Schema;
     using Microsoft.Bot.Schema.Teams;
+    using Microsoft.Extensions.Logging;
     using Microsoft.Teams.Apps.CompanyCommunicator.Models;
 
     /// <summary>
@@ -28,6 +29,8 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
         // ReadReceiptObject can be any object. It is currently tracking the id of a message that bot sent & bot cares,
         // the read status of the message, the AAD id of the user who read the message.
         private ConcurrentDictionary<string, ReadReceiptObject> trackTheMessageBotCaresPerThread;
+
+        private ILogger log;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserTeamsActivityHandler"/> class.
@@ -78,6 +81,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
         /// <inheritdoc/>
         protected override async Task OnTeamsReadReceiptAsync(ReadReceiptInfo readReceiptInfo, ITurnContext<IEventActivity> turnContext, CancellationToken cancellationToken)
         {
+            this.log.LogInformation($"START - Reached inside Read Receipt Event - {DateTime.Now}");
             await Task.Run(() =>
             {
                 var threadId = turnContext.Activity.Conversation.Id;
@@ -93,6 +97,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Bot
                     readReceiptObject.IsMessageRead = isMessageRead;
                 }
             });
+            this.log.LogInformation($"END - Reached at END of Read Receipt Event - {DateTime.Now}");
         }
 
         private bool IsTeamInformationUpdated(IConversationUpdateActivity activity)
