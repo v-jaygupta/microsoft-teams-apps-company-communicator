@@ -46,10 +46,17 @@
       align-items: start;
       div[class~='schedule-timepicker'] {
         margin-left: 0px;
+        width: 65%;
+      }
+      div[class~='schedule-datepicker'] {
+        width: 65%;
+        div[class~='ms-TextField-fieldGroup']{
+            height: 45px;
       }
     }
     .flex-container {
       flex-direction: column;
     }
   }
+}
 }
