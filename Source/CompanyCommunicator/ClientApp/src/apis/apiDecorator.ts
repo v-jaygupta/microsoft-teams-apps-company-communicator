@@ -8,7 +8,7 @@ import { HostClientType, authentication } from '@microsoft/teams-js';
 
 const isIOSHost = () => {
   const clientType = store.getState().messages.hostClientType.payload;
-  return clientType === HostClientType.ios || clientType === HostClientType.ipados;
+  return clientType === HostClientType.ios || clientType === HostClientType.ipados || clientType === HostClientType.web || clientType === HostClientType.desktop || clientType === HostClientType.android;
 };
 
 export class ApiDecorator {
