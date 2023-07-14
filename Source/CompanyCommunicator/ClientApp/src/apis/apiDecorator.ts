@@ -8,7 +8,7 @@ import { HostClientType, authentication } from '@microsoft/teams-js';
 
 const isIOSHost = () => {
   const clientType = store.getState().messages.hostClientType.payload;
-  return clientType === HostClientType.ios || clientType === HostClientType.ipados || clientType === HostClientType.web || clientType === HostClientType.desktop || clientType === HostClientType.android;
+  return clientType === HostClientType.ios || clientType === HostClientType.ipados;
 };
 
 export class ApiDecorator {
@@ -16,6 +16,9 @@ export class ApiDecorator {
     return await this.handleApiCall('get', url).then((response) => {
       if (response.type === 'cors' && response.status >= 401 && isIOSHost()) {
         return this.handleApiCall('get', response.url).then((result) => result.json());
+     } else if (response.status >= 401) {
+        this.handleError(response);
+        return null;
       } else {
         return response.json();
       }
