@@ -16,9 +16,8 @@ export class ApiDecorator {
     return await this.handleApiCall('get', url).then((response) => {
       if (response.type === 'cors' && response.status >= 401 && isIOSHost()) {
         return this.handleApiCall('get', response.url).then((result) => result.json());
-     } else if (response.status >= 401) {
+      } else if (response.status >= 401) {
         this.handleError(response);
-        return null;
       } else {
         return response.json();
       }
@@ -29,6 +28,8 @@ export class ApiDecorator {
     return await this.handleApiCall('get', url).then((response) => {
       if (response.type === 'cors' && response.status >= 401 && isIOSHost()) {
         return this.handleApiCall('get', response.url).then((result) => result.text());
+      } else if (response.status >= 401) {
+        this.handleError(response);
       } else {
         return response.text();
       }
@@ -140,10 +141,10 @@ export class ApiDecorator {
     // @ts-ignore
     const lang: string = i18n.language;
 
-    if (error?.response?.status) {
-      if (error.response.status === 403) {
+    if (error?.status) {
+      if (error.status === 403) {
         window.location.href = `/${ROUTE_PARTS.ERROR_PAGE}/403?locale=${lang}`;
-      } else if (error.response.status === 401) {
+      } else if (error.status === 401) {
         window.location.href = `/${ROUTE_PARTS.ERROR_PAGE}/401?locale=${lang}`;
       } else {
         window.location.href = `/${ROUTE_PARTS.ERROR_PAGE}?locale=${lang}`;
