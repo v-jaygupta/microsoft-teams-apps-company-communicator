@@ -22,6 +22,13 @@ export const DeleteConfirmationTask = () => {
     dialog.url.submit();
   };
 
+  const handleTimeout = () => {
+    // eslint-disable-next-line no-debugger
+    debugger;
+    setShowDeletingSpinner(false);
+    dialog.url.submit();
+  };
+
   const onDelete = () => {
     let fromDate = moment().format('MM/DD/YYYY');
     let toDate = moment().format('MM/DD/YYYY');
@@ -39,18 +46,25 @@ export const DeleteConfirmationTask = () => {
     setShowDeletingSpinner(true);
 
     const payload: IDeleteMessageRequest = { selectedDateRange: deletionType, startDate: fromDate, endDate: toDate };
+    deleteHistoricalMessages(payload);
+  };
 
-    void deleteMessages(payload).then(() => {
-      // eslint-disable-next-line no-debugger
-      debugger;
-      GetDeletedMessagesSilentAction(dispatch);
-      setTimeout(() => {
-        // eslint-disable-next-line no-debugger
-        debugger;
-        setShowDeletingSpinner(false);
-        dialog.url.submit();
-      }, 30000);
-    });
+  const deleteHistoricalMessages = (payload: IDeleteMessageRequest) => {
+    try {
+      deleteMessages(payload)
+        .then(() => {
+          // eslint-disable-next-line no-debugger
+          debugger;
+          GetDeletedMessagesSilentAction(dispatch);
+        })
+        .finally(() => {
+          // eslint-disable-next-line no-debugger
+          debugger;
+          setTimeout(handleTimeout, 30000);
+        });
+    } catch (error) {
+      return error;
+    }
   };
 
   return (
