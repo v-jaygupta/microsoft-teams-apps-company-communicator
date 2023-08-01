@@ -29,21 +29,25 @@ export const DeleteConfirmationTask = () => {
     if (deletionType.toLowerCase() === 'customdate') {
       fromDate = moment(deletionFromDate).format('MM/DD/YYYY');
       toDate = moment(deletionToDate).format('MM/DD/YYYY');
-    } else if (deletionType.toLowerCase() === 'last30Days') {
+    } else if (deletionType.toLowerCase() === 'last30days') {
       fromDate = moment().subtract(30, 'days').format('MM/DD/YYYY');
-    } else if (deletionType.toLowerCase() === 'last3Months') {
+    } else if (deletionType.toLowerCase() === 'last3months') {
       fromDate = moment().subtract(90, 'days').format('MM/DD/YYYY');
-    } else if (deletionType.toLowerCase() === 'last6Months') {
+    } else if (deletionType.toLowerCase() === 'last6months') {
       fromDate = moment().subtract(180, 'days').format('MM/DD/YYYY');
     }
     setShowDeletingSpinner(true);
 
-    const payload: IDeleteMessageRequest = { rowKeyId: '', selectedDateRange: deletionType, startDate: fromDate, endDate: toDate };
+    const payload: IDeleteMessageRequest = { selectedDateRange: deletionType, startDate: fromDate, endDate: toDate };
 
     void deleteMessages(payload).then(() => {
-      setShowDeletingSpinner(false);
+      // eslint-disable-next-line no-debugger
+      debugger;
       GetDeletedMessagesSilentAction(dispatch);
       setTimeout(() => {
+        // eslint-disable-next-line no-debugger
+        debugger;
+        setShowDeletingSpinner(false);
         dialog.url.submit();
       }, 30000);
     });
