@@ -26,12 +26,12 @@ export const HomePage = (props: IHomePage) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = React.useState<string | undefined>();
+  // const [currentUser, setCurrentUser] = React.useState<string | undefined>();
 
   React.useEffect(() => {
     if (app.isInitialized()) {
       void app.getContext().then((context: app.Context) => {
-        setCurrentUser(context.user?.userPrincipalName);
+        // setCurrentUser(context.user?.userPrincipalName);
       });
     }
   }, []);
@@ -58,10 +58,10 @@ export const HomePage = (props: IHomePage) => {
     navigate(`/${ROUTE_PARTS.DELETE_MESSAGES}`);
   };
 
-  const hasDeletePermission = () => {
-    const authorizedUsers = process.env.REACT_APP_AUTHORIZED_USERS_EMAIL;
-    return currentUser ? authorizedUsers?.toLowerCase().includes(currentUser.toLowerCase()) : false;
-  };
+  // const hasDeletePermission = () => {
+  //   const authorizedUsers = process.env.REACT_APP_AUTHORIZED_USERS_EMAIL;
+  //   return currentUser ? authorizedUsers?.toLowerCase().includes(currentUser.toLowerCase()) : false;
+  // };
 
   return (
     <>
@@ -69,10 +69,11 @@ export const HomePage = (props: IHomePage) => {
       <Button id='newMessageButtonId' className='cc-button' icon={<Status24Regular />} appearance='primary' onClick={onNewMessage}>
         {t('NewMessage')}
       </Button>
-      {hasDeletePermission() && <Button id='deleteMessageButtonId' className='cc-button' icon={<Delete24Regular />} appearance='secondary' onClick={onDeleteMessages}>
+      {/* {hasDeletePermission() && */}
+      <Button id='deleteMessageButtonId' className='cc-button' icon={<Delete24Regular />} appearance='secondary' onClick={onDeleteMessages}>
         {t('DeleteMessages')}
       </Button>
-      }
+      {/* } */}
       <Accordion defaultOpenItems={['1', '2', '3']} multiple collapsible>
         <AccordionItem value='1' key='draftMessagesKey'>
           <AccordionHeader><Body1Stronger>{t('DraftMessagesSectionTitle')}</Body1Stronger></AccordionHeader>
