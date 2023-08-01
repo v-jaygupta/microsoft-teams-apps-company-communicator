@@ -45,7 +45,7 @@ export const DeleteConfirmationTask = () => {
       GetDeletedMessagesSilentAction(dispatch);
       setTimeout(() => {
         dialog.url.submit();
-      }, 3000);
+      }, 30000);
     });
   };
 
