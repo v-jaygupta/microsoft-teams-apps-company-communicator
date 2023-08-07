@@ -84,6 +84,8 @@ export const DeleteMessages = (props: IDeleteMessagesProps) => {
         return true;
       } else if (toDate > fromDate && moment(toDate).diff(moment(fromDate), 'days') > 180) {
         return true;
+      } else if (toDate === fromDate) {
+        return true;
       }
     }
     return false;
@@ -95,6 +97,9 @@ export const DeleteMessages = (props: IDeleteMessagesProps) => {
     }
     if (deleteSelection === 'customDate' && fromDate && toDate && toDate > fromDate && moment(toDate).diff(moment(fromDate), 'days') > 180) {
       return t('CustomInvalidDateRange');
+    }
+    if (deleteSelection === 'customDate' && fromDate && toDate && toDate.getTime() === fromDate.getTime()) {
+      return t('CustomSameDateValidation');
     }
     return '';
   };

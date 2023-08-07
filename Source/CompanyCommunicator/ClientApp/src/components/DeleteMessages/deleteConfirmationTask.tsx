@@ -34,14 +34,14 @@ export const DeleteConfirmationTask = () => {
     let toDate = moment().format('MM/DD/YYYY');
 
     if (deletionType.toLowerCase() === 'customdate') {
-      fromDate = moment(deletionFromDate).format('MM/DD/YYYY');
-      toDate = moment(deletionToDate).format('MM/DD/YYYY');
+      fromDate = moment(deletionFromDate).utc().format('MM/DD/YYYY');
+      toDate = moment(deletionToDate).utc().format('MM/DD/YYYY');
     } else if (deletionType.toLowerCase() === 'last30days') {
-      fromDate = moment().subtract(30, 'days').format('MM/DD/YYYY');
+      fromDate = moment().utc().subtract(30, 'days').format('MM/DD/YYYY');
     } else if (deletionType.toLowerCase() === 'last3months') {
-      fromDate = moment().subtract(90, 'days').format('MM/DD/YYYY');
+      fromDate = moment().utc().subtract(90, 'days').format('MM/DD/YYYY');
     } else if (deletionType.toLowerCase() === 'last6months') {
-      fromDate = moment().subtract(180, 'days').format('MM/DD/YYYY');
+      fromDate = moment().utc().subtract(180, 'days').format('MM/DD/YYYY');
     }
     setShowDeletingSpinner(true);
 

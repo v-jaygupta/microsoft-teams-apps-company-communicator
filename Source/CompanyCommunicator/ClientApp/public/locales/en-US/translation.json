@@ -157,5 +157,6 @@
   "ScheduleTimeValidation": "Scheduled time is less than 30 Minutes.",
   "DeletingMessagesLabel": "Cleanup operation has started and will run in the background. You can track the status in the summary grid.",
   "CustomInvalidDateRange": "Please select a date range of maximum 6 months.",
-  "CustomDeleteInfoContent": "A maximum date range of 6 months is allowed for message deletion."
+  "CustomDeleteInfoContent": "A maximum date range of 6 months is allowed for message deletion.",
+  "CustomSameDateValidation": "From date and To date cannot be same."
 }
