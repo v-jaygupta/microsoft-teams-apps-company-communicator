@@ -179,7 +179,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func
 
             log.LogInformation($"Starting PurgeEntitiesAsync");
             TimeSpan startDate = DateTimeOffset.UtcNow.Date - purgeStartDate;
-            TimeSpan endDate = DateTimeOffset.UtcNow.Date - purgeEndDate;
+            TimeSpan endDate = DateTimeOffset.UtcNow.Date - purgeEndDate.AddDays(1);
             var purgeRecordsOlderThanDaysStartDate = startDate.Days;
             var purgeRecordsOlderThanDaysEndDate = endDate.Days;
             var query = new TableQuery();
