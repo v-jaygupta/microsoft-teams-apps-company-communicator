@@ -42,7 +42,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func.Services.DataCleanU
             var toDateFilter = TableQuery.GenerateFilterConditionForDate(
                nameof(TableEntity.Timestamp),
                QueryComparisons.LessThanOrEqual,
-               DateTimeOffset.UtcNow.Date.AddDays(-purgeRecordsOlderThanDaysEndDate));
+               DateTimeOffset.UtcNow.Date.AddDays(1).AddDays(-purgeRecordsOlderThanDaysEndDate));
 
             var completeFilter = TableQuery.CombineFilters(toDateFilter, TableOperators.And, fromDateFilter);
 
@@ -68,7 +68,7 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func.Services.DataCleanU
             var toDateFilter = TableQuery.GenerateFilterConditionForDate(
                nameof(TableEntity.Timestamp),
                QueryComparisons.LessThanOrEqual,
-               DateTimeOffset.UtcNow.Date.AddDays(-purgeRecordsOlderThanDaysEndDate));
+               DateTimeOffset.UtcNow.Date.AddDays(1).AddDays(-purgeRecordsOlderThanDaysEndDate));
             var partitionKeyFilter = TableQuery.GenerateFilterCondition(
                nameof(TableEntity.PartitionKey),
                QueryComparisons.NotEqual,
