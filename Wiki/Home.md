@@ -6,6 +6,7 @@ The app provides an easy interface for designated users to create, preview, coll
 
 It provides a foundation to build custom targeted communication capabilities such as custom telemetry on how many users acknowledged or interacted with a message.
 
+
 ![Company Communicator compose message screen](images/CompanyCommunicatorCompose.png)
 
 * [Solution overview](Solution-overview)
