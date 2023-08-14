@@ -132,6 +132,11 @@ namespace Microsoft.Teams.Apps.CompanyCommunicator.Data.Func
             string inputEndDate = requestPram.EndDate;
             var fromDate = DateTimeOffset.ParseExact(inputStartDate, "MM/dd/yyyy", CultureInfo.InvariantCulture);
             var toDate = DateTimeOffset.ParseExact(inputEndDate, "MM/dd/yyyy", CultureInfo.InvariantCulture);
+            if (requestPram.SelectedDateRange != "customDate")
+            {
+                toDate = toDate.AddDays(1);
+            }
+
             //var fromDate = DateTimeOffset.ParseExact(inputStartDate, "ddd MMM dd yyyy", CultureInfo.InvariantCulture);
             //var toDate = DateTimeOffset.ParseExact(inputEndDate, "ddd MMM dd yyyy", CultureInfo.InvariantCulture);
             await this.PurgeEntitiesAsync(fromDate, toDate, log, this.sentNotificationDataRepository.Table).ConfigureAwait(false);
