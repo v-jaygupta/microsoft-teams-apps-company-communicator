@@ -734,6 +734,7 @@ export const NewMessage = () => {
                 validationMessage={titleErrorMessage}
               >
                 <Input
+                  autoFocus
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderTitle')!}
                   onChange={onTitleChanged}
@@ -772,6 +773,7 @@ export const NewMessage = () => {
                     value={imageFileName || ''}
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     placeholder={t('PlaceHolderImageURL')!}
+                    aria-placeholder={t('PlaceHolderImageURL') ?? ''}
                     onChange={onImageLinkChanged}
                   />
                   <div
@@ -819,6 +821,7 @@ export const NewMessage = () => {
                   appearance='filled-darker'
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderSummary')!}
+                  aria-placeholder={t('PlaceHolderSummary') ?? ''}
                   value={messageState.summary ?? ''}
                   onChange={onSummaryChanged}
                 />
@@ -827,6 +830,7 @@ export const NewMessage = () => {
                 <Input
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderAuthor')!}
+                  aria-placeholder={t('PlaceHolderAuthor') ?? ''}
                   size='large'
                   onChange={onAuthorChanged}
                   autoComplete='off'
@@ -839,6 +843,7 @@ export const NewMessage = () => {
                   size='large'
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderButtonTitle')!}
+                  aria-placeholder={t('PlaceHolderButtonTitle') ?? ''}
                   onChange={onBtnTitleChanged}
                   autoComplete='off'
                   appearance='filled-darker'
@@ -855,6 +860,7 @@ export const NewMessage = () => {
                   size='large'
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderButtonURL')!}
+                  aria-placeholder={t('PlaceHolderButtonURL') ?? ''}
                   onChange={onBtnLinkChanged}
                   type='url'
                   autoComplete='off'

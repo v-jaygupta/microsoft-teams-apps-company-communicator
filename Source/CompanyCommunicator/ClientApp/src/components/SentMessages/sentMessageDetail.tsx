@@ -132,7 +132,13 @@ export const SentMessageDetail = (sentMessages: any) => {
   const countStatusMsg = () => {
     return sentMessages?.sentMessages?.filter((x: any) => x.status && x.status !== 'Canceled' && x.status !== 'Sent' && x.status !== 'Failed').length;
   };
-
+  const isKeyPressEvent = (event: React.KeyboardEvent<HTMLTableCellElement>) => {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      return true;
+    }
+    return false;
+  };
   const mobileRender = () => {
     return (
       <Table {...keyboardNavAttr} role='grid' className='sent-messages' aria-label={t('sentMessagesGridNavigation') ?? ''}>
@@ -270,7 +276,11 @@ export const SentMessageDetail = (sentMessages: any) => {
           {sentMessages.sentMessages?.map((item: any) => (
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             <TableRow key={`${item.id}key`}>
-              <TableCell tabIndex={0} role='gridcell'>
+              <TableCell tabIndex={0} role='gridcell'
+               onKeyDown={(e: React.KeyboardEvent<HTMLTableCellElement>) => {
+                 isKeyPressEvent(e) && onOpenTaskModule(null, statusUrl(item.id), t('ViewStatus'));
+               }}
+              >
                 <TableCellLayout
                   media={<Chat20Regular />}
                   title={item.title}
@@ -285,7 +295,7 @@ export const SentMessageDetail = (sentMessages: any) => {
               </TableCell>
               {countStatusMsg() > 0 && (
                 <TableCell tabIndex={0} role='gridcell'>
-                  <TableCellLayout truncate>
+                  <TableCellLayout truncate aria-live="assertive" role="alert" id="updateMessagesId" >
                     {renderSendingText(item)}
                   </TableCellLayout>
                 </TableCell>
@@ -294,7 +304,8 @@ export const SentMessageDetail = (sentMessages: any) => {
                 <TableCellLayout>
                   <div style={{ display: 'inline-block' }}>
                     <Tooltip content={t('TooltipSuccess') ?? ''} relationship='label'>
-                      <Button
+                      <Button tabIndex={-1}
+                        role='presentation'
                         appearance='subtle'
                         icon={<CheckmarkSquare24Regular style={{ color: '#22bb33', verticalAlign: 'middle' }} />}
                         size='small'
@@ -304,7 +315,8 @@ export const SentMessageDetail = (sentMessages: any) => {
                   </div>
                   <div style={{ display: 'inline-block' }}>
                     <Tooltip content={t('TooltipFailure') ?? ''} relationship='label'>
-                      <Button
+                      <Button tabIndex={-1}
+                        role='presentation'
                         appearance='subtle'
                         icon={<ShareScreenStop24Regular style={{ color: '#bb2124', verticalAlign: 'middle' }} />}
                         size='small'
@@ -317,6 +329,7 @@ export const SentMessageDetail = (sentMessages: any) => {
                       <Tooltip content='Canceled' relationship='label'>
                         <Button
                           appearance='subtle'
+                          role='presentation'
                           icon={<BookExclamationMark24Regular style={{ color: '#f0ad4e', verticalAlign: 'middle' }} />}
                           size='small'
                         ></Button>
@@ -329,6 +342,7 @@ export const SentMessageDetail = (sentMessages: any) => {
                       <Tooltip content='Unknown' relationship='label'>
                         <Button
                           appearance='subtle'
+                          role='presentation'
                           icon={<Warning24Regular style={{ color: '#e9835e', verticalAlign: 'middle' }} />}
                           size='small'
                         ></Button>
@@ -346,7 +360,7 @@ export const SentMessageDetail = (sentMessages: any) => {
                   <Persona size='extra-small' textAlignment='center' name={item.createdBy} secondaryText={'Member'} avatar={{ color: 'colorful' }} />
                 </TableCellLayout>
               </TableCell>
-              <TableCell role='gridcell' style={{ width: '50px' }}>
+              <TableCell tabIndex={0} role='gridcell' style={{ width: '50px' }}>
                 <TableCellLayout style={{ float: 'right' }}>
                   <Menu>
                     <MenuTrigger disableButtonEnhancement>

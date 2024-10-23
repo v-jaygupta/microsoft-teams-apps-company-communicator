@@ -120,6 +120,14 @@ export const DraftMessageDetail = (draftMessages: any) => {
       });
   };
 
+  const isKeyPressEvent = (event: React.KeyboardEvent<HTMLTableCellElement>) => {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.preventDefault();
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Table {...keyboardNavAttr} role='grid' aria-label={t('draftMessagesGridNavigation') ?? ''}>
       <TableHeader>
@@ -141,6 +149,10 @@ export const DraftMessageDetail = (draftMessages: any) => {
                 truncate
                 media={<Chat20Regular />}
                 style={{ cursor: 'pointer' }}
+                role='button'
+                onKeyDown={(e: React.KeyboardEvent<HTMLTableCellElement>) => {
+                  isKeyPressEvent(e) && onOpenTaskModule(editUrl(item.id), t('EditMessage'));
+                }}
                 onClick={() => {
                   onOpenTaskModule(editUrl(item.id), t('EditMessage'));
                 }}

@@ -217,7 +217,7 @@ export const SendConfirmationTask = () => {
           <div className='footer-action-right'>
             <div className='footer-actions-flex'>
               {disableSendButton && <Spinner role='alert' id='sendLoader' label={t('PreparingMessageLabel')} size='small' labelPosition='after' />}
-              <Button disabled={loader || disableSendButton} style={{ marginLeft: '16px' }} onClick={onSendMessage} appearance='primary'>
+              <Button disabled={loader || disableSendButton} style={{ marginLeft: '16px' }} onClick={onSendMessage} appearance='primary' aria-labelledby='updateMessagesId'>
                 {t('Send')}
               </Button>
             </div>
