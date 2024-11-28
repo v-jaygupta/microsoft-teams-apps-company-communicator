@@ -32,6 +32,10 @@
     "typestyle": "^2.4.0",
     "validator": "^13.9.0"
   },
+  "engines": {
+    "node": ">=20.18.1",
+    "npm": ">=10.8.2"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
