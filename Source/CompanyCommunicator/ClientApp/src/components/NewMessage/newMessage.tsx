@@ -7,7 +7,7 @@ import * as AdaptiveCards from 'adaptivecards';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { isURL } from 'validator';
+import validator from 'validator';
 import {
   Button,
   Combobox,
@@ -598,7 +598,7 @@ export const NewMessage = () => {
 
   const onBtnLinkChanged = (event: any) => {
     if (
-      isURL(event.target.value, { require_protocol: true, protocols: ['https'] }) ||
+      validator.isURL(event.target.value, { require_protocol: true, protocols: ['https'] }) ||
       event.target.value === ''
     ) {
       setBtnLinkErrorMessage('');
@@ -734,6 +734,7 @@ export const NewMessage = () => {
                 validationMessage={titleErrorMessage}
               >
                 <Input
+                  autoFocus
                   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   placeholder={t('PlaceHolderTitle')!}
                   onChange={onTitleChanged}
