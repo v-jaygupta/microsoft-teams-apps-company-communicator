@@ -1110,6 +1110,7 @@ export const NewMessage = () => {
                 label={t('ScheduleSend')}
                 defaultChecked={scheduleSendCheckBox}
                 onChange={handleScheduleSendCheckBox}
+                aria-describedby='ScheduleNote'
               />
               {scheduleSendCheckBox && (
                 <div>
