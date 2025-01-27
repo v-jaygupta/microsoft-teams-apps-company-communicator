@@ -29,8 +29,8 @@ import {
   tokens,
   useId,
   Checkbox,
+  InfoLabel,
 } from '@fluentui/react-components';
-import { InfoLabel } from '@fluentui/react-components/unstable';
 import { TimePicker, DatePicker, IComboBox } from '@fluentui/react';
 import { initializeIcons } from '@fluentui/react/lib/Icons';
 import { ArrowUpload24Regular, Dismiss12Regular } from '@fluentui/react-icons';
